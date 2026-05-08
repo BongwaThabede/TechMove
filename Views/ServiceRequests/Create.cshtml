@@ -1,0 +1,69 @@
+@model TechMove.Models.ServiceRequest
+@{
+    ViewData["Title"] = "Create Service Request";
+    var rate = ViewBag.CurrentRate as decimal? ?? 0m;
+}
+
+<h1>Create Service Request</h1>
+
+<div class="alert alert-info">
+    Current USD to ZAR rate: <strong>@rate</strong>
+</div>
+
+<form asp-action="Create" method="post">
+    <input type="hidden" asp-for="ContractId" value="@ViewBag.ContractId" />
+
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <div class="mb-3">
+        <label asp-for="Description" class="form-label"></label>
+        <input asp-for="Description" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Cost" class="form-label">Cost (USD)</label>
+        <input asp-for="Cost" class="form-control" id="usdAmount" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Estimated Cost (ZAR)</label>
+        <input class="form-control" id="zarAmount" readonly />
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Status" class="form-label"></label>
+        <select asp-for="Status" class="form-select">
+            <option>Pending</option>
+            <option>InProgress</option>
+            <option>Completed</option>
+        </select>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Create</button>
+    <a asp-controller="Contracts" asp-action="Index" class="btn btn-secondary">Back</a>
+</form>
+
+@section Scripts {
+    <script>
+        (function () {
+            const rate = @rate.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            const usdInput = document.getElementById("usdAmount");
+            const zarInput = document.getElementById("zarAmount");
+
+            function updateEstimate() {
+                const usd = parseFloat(usdInput.value || "0");
+                if (!isNaN(usd)) {
+                    zarInput.value = (usd * rate).toFixed(2);
+                } else {
+                    zarInput.value = "";
+                }
+            }
+
+            usdInput.addEventListener("input", updateEstimate);
+            updateEstimate();
+        })();
+    </script>
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

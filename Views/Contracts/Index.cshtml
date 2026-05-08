@@ -1,0 +1,70 @@
+@model IEnumerable<TechMove.Models.Contract>
+@{
+    ViewData["Title"] = "Contracts";
+}
+
+<h1>Contracts</h1>
+
+<p>
+    <a class="btn btn-primary" asp-action="Create">Create Contract</a>
+</p>
+
+<form asp-action="Search" method="get" class="row g-2 mb-3">
+    <div class="col-md-3">
+        <input type="date" name="startDate" class="form-control" />
+    </div>
+    <div class="col-md-3">
+        <input type="date" name="endDate" class="form-control" />
+    </div>
+    <div class="col-md-3">
+        <select name="status" class="form-select">
+            <option value="">All statuses</option>
+            <option>Draft</option>
+            <option>Active</option>
+            <option>Expired</option>
+            <option>OnHold</option>
+        </select>
+    </div>
+    <div class="col-md-3">
+        <button type="submit" class="btn btn-outline-secondary">Filter</button>
+    </div>
+</form>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Client</th>
+            <th>Status</th>
+            <th>Start Date</th>
+            <th>End Date</th>
+            <th>Service Level</th>
+            <th>Agreement</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var item in Model)
+    {
+        <tr>
+            <td>@item.Client?.Name</td>
+            <td>@item.Status</td>
+            <td>@item.StartDate.ToShortDateString()</td>
+            <td>@item.EndDate.ToShortDateString()</td>
+            <td>@item.ServiceLevel</td>
+            <td>
+                @if (!string.IsNullOrWhiteSpace(item.SignedAgreementPath))
+                {
+                    <a asp-action="DownloadAgreement" asp-route-id="@item.Id">Download PDF</a>
+                }
+                else
+                {
+                    <span class="text-muted">None</span>
+                }
+            </td>
+            <td>
+                <a asp-action="Details" asp-route-id="@item.Id">Details</a>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>

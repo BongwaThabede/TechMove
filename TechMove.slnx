@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="TechMove.csproj" />
+  <Project Path="TechMove.Tests\TechMove.Tests.csproj" />
+</Solution>
