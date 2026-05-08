@@ -41,5 +41,12 @@ namespace TechMove.Models
             return Status.Equals("Expired", StringComparison.OrdinalIgnoreCase) ||
                    Status.Equals("OnHold", StringComparison.OrdinalIgnoreCase);
         }
+
+        public bool IsValidForServiceRequest(DateTime utcToday)
+        {
+            return Status.Equals("Active", StringComparison.OrdinalIgnoreCase) &&
+                   StartDate.Date <= utcToday.Date &&
+                   EndDate.Date >= utcToday.Date;
+        }
     }
 }

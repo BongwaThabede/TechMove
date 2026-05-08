@@ -9,7 +9,9 @@ ASP.NET Core MVC prototype for TechMove with EF Core, workflow validation, PDF f
   - `Contract`
   - `ServiceRequest`
 - Business workflow rule:
-  - A `ServiceRequest` cannot be created when the parent `Contract` is `Expired` or `OnHold`
+  - A `ServiceRequest` can only be created when the parent `Contract` is `Active`
+  - Contract statuses are auto-tracked (`Draft`, `Active`, `Expired`) from start/end dates
+  - `OnHold` is respected as a manual override state
 - File handling:
   - Upload signed contract agreements (`.pdf` only)
   - File extension + PDF signature validation
@@ -20,7 +22,9 @@ ASP.NET Core MVC prototype for TechMove with EF Core, workflow validation, PDF f
 - Filtering/search:
   - Contracts filter by date range and status
 - Unit testing:
-  - xUnit tests for currency conversion and file validation
+  - xUnit tests for currency conversion, file validation, and contract workflow rules
+- Containerization:
+  - Dockerfile included for container-ready deployment
 
 ## Tech Stack
 
@@ -68,6 +72,20 @@ dotnet ef database update
 
 ```bash
 dotnet run --project TechMove.csproj
+```
+
+## Docker
+
+Build image:
+
+```bash
+docker build -t techmove:latest .
+```
+
+Run container:
+
+```bash
+docker run --rm -p 8080:8080 techmove:latest
 ```
 
 ## Migrations

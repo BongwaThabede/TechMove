@@ -14,6 +14,7 @@ namespace TechMove.Controllers
         private readonly ApplicationDbContext _context;
         private readonly ICurrencyService _currencyService;
         private readonly IFileValidationService _fileValidationService;
+        private readonly IContractStatusService _contractStatusService;
         private readonly IWebHostEnvironment _environment;
         private readonly ILogger<ContractsController> _logger;
 
@@ -21,12 +22,14 @@ namespace TechMove.Controllers
             ApplicationDbContext context,
             ICurrencyService currencyService,
             IFileValidationService fileValidationService,
+            IContractStatusService contractStatusService,
             IWebHostEnvironment environment,
             ILogger<ContractsController> logger)
         {
             _context = context;
             _currencyService = currencyService;
             _fileValidationService = fileValidationService;
+            _contractStatusService = contractStatusService;
             _environment = environment;
             _logger = logger;
         }
@@ -34,6 +37,8 @@ namespace TechMove.Controllers
         // GET: Contracts
         public async Task<IActionResult> Index()
         {
+            await _contractStatusService.SyncAllAsync(DateTime.UtcNow.Date);
+
             var contracts = await _context.Contracts
                 .Include(c => c.Client)
                 .ToListAsync();
@@ -50,6 +55,11 @@ namespace TechMove.Controllers
                 .FirstOrDefaultAsync(m => m.Id == id);
             
             if (contract == null) return NotFound();
+
+            if (_contractStatusService.SyncSingle(contract, DateTime.UtcNow.Date))
+            {
+                await _context.SaveChangesAsync();
+            }
 
             return View(contract);
         }
@@ -106,6 +116,8 @@ namespace TechMove.Controllers
         // GET: Contracts/Search
         public async Task<IActionResult> Search(DateTime? startDate, DateTime? endDate, string status)
         {
+            await _contractStatusService.SyncAllAsync(DateTime.UtcNow.Date);
+
             var query = _context.Contracts.Include(c => c.Client).AsQueryable();
 
             if (startDate.HasValue)

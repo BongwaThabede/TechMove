@@ -11,15 +11,18 @@ namespace TechMove.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly ICurrencyService _currencyService;
+        private readonly IContractStatusService _contractStatusService;
         private readonly ILogger<ServiceRequestsController> _logger;
 
         public ServiceRequestsController(
             ApplicationDbContext context,
             ICurrencyService currencyService,
+            IContractStatusService contractStatusService,
             ILogger<ServiceRequestsController> logger)
         {
             _context = context;
             _currencyService = currencyService;
+            _contractStatusService = contractStatusService;
             _logger = logger;
         }
 
@@ -31,10 +34,15 @@ namespace TechMove.Controllers
             var contract = await _context.Contracts.FindAsync(contractId);
             if (contract == null) return NotFound();
 
-            // Check workflow rule
-            if (contract.IsExpiredOrOnHold())
+            if (_contractStatusService.SyncSingle(contract, DateTime.UtcNow.Date))
             {
-                TempData["ErrorMessage"] = $"Cannot create service request: Contract is {contract.Status}";
+                await _context.SaveChangesAsync();
+            }
+
+            // Workflow rule: only active contracts can raise requests.
+            if (!contract.IsValidForServiceRequest(DateTime.UtcNow.Date))
+            {
+                TempData["ErrorMessage"] = $"Cannot create service request: Contract must be Active. Current status is {contract.Status}.";
                 return RedirectToAction("Details", "Contracts", new { id = contractId });
             }
 
@@ -53,9 +61,14 @@ namespace TechMove.Controllers
         {
             // Validate contract status
             var contract = await _context.Contracts.FindAsync(serviceRequest.ContractId);
-            if (contract == null || contract.IsExpiredOrOnHold())
+            if (contract != null && _contractStatusService.SyncSingle(contract, DateTime.UtcNow.Date))
             {
-                TempData["ErrorMessage"] = "Cannot create service request for expired or on-hold contracts";
+                await _context.SaveChangesAsync();
+            }
+
+            if (contract == null || !contract.IsValidForServiceRequest(DateTime.UtcNow.Date))
+            {
+                TempData["ErrorMessage"] = "Cannot create service request: only active contracts are allowed.";
                 return RedirectToAction("Index", "Contracts");
             }
 
