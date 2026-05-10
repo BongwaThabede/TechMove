@@ -1,0 +1,114 @@
+@model RegisterViewModel
+@{
+    ViewData["Title"] = "Create Your Account";
+    Layout = "_LayoutLanding";
+}
+
+<div class="landing-login-card landing-register-card">
+    <h2 class="landing-login-title">Create Your Account</h2>
+
+    <form asp-action="Register" method="post" class="landing-register-form">
+        <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+
+        <section class="landing-form-section" aria-labelledby="reg-personal">
+            <h3 id="reg-personal" class="landing-form-section-title">Personal Information</h3>
+            <div class="landing-field">
+                <label asp-for="FirstName" class="landing-label"></label>
+                <input asp-for="FirstName" class="form-control landing-input" autocomplete="given-name" />
+                <span asp-validation-for="FirstName" class="text-danger small"></span>
+            </div>
+            <div class="landing-field">
+                <label asp-for="LastName" class="landing-label"></label>
+                <input asp-for="LastName" class="form-control landing-input" autocomplete="family-name" />
+                <span asp-validation-for="LastName" class="text-danger small"></span>
+            </div>
+            <div class="landing-field">
+                <label asp-for="Email" class="landing-label"></label>
+                <input asp-for="Email" type="email" class="form-control landing-input" autocomplete="email" />
+                <span asp-validation-for="Email" class="text-danger small"></span>
+            </div>
+            <div class="landing-field">
+                <label asp-for="Phone" class="landing-label"></label>
+                <input asp-for="Phone" type="tel" class="form-control landing-input" autocomplete="tel" />
+                <span asp-validation-for="Phone" class="text-danger small"></span>
+            </div>
+            <div class="landing-field">
+                <label asp-for="Password" class="landing-label"></label>
+                <input asp-for="Password" class="form-control landing-input" autocomplete="new-password" />
+                <span asp-validation-for="Password" class="text-danger small"></span>
+            </div>
+            <div class="landing-field">
+                <label asp-for="ConfirmPassword" class="landing-label"></label>
+                <input asp-for="ConfirmPassword" class="form-control landing-input" autocomplete="new-password" />
+                <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+            </div>
+        </section>
+
+        <section class="landing-form-section" aria-labelledby="reg-company">
+            <h3 id="reg-company" class="landing-form-section-title">Company Information</h3>
+            <div class="landing-field">
+                <label asp-for="CompanyName" class="landing-label"></label>
+                <input asp-for="CompanyName" class="form-control landing-input" autocomplete="organization" />
+                <span asp-validation-for="CompanyName" class="text-danger small"></span>
+            </div>
+            <div class="landing-field">
+                <label asp-for="CompanyType" class="landing-label"></label>
+                <select asp-for="CompanyType" class="form-select landing-input landing-select">
+                    <option value="">Select company type…</option>
+                    @foreach (var opt in RegisterViewModel.CompanyTypeOptions)
+                    {
+                        <option value="@opt">@opt</option>
+                    }
+                </select>
+                <span asp-validation-for="CompanyType" class="text-danger small"></span>
+            </div>
+        </section>
+
+        <section class="landing-form-section" aria-labelledby="reg-account-type">
+            <h3 id="reg-account-type" class="landing-form-section-title">Account Type</h3>
+            <div class="landing-radio-group" role="radiogroup" aria-labelledby="reg-account-type">
+                <div class="form-check landing-radio">
+                    <input class="form-check-input" type="radio" asp-for="AccountType" value="LogisticsManager" id="acc-logistics" />
+                    <label class="form-check-label" for="acc-logistics">Logistics Manager</label>
+                </div>
+                <div class="form-check landing-radio">
+                    <input class="form-check-input" type="radio" asp-for="AccountType" value="GeneralUser" id="acc-client" />
+                    <label class="form-check-label" for="acc-client">Client/User</label>
+                </div>
+                <div class="form-check landing-radio">
+                    <input class="form-check-input" type="radio" asp-for="AccountType" value="Viewer" id="acc-viewer" />
+                    <label class="form-check-label" for="acc-viewer">Viewer</label>
+                </div>
+            </div>
+            <span asp-validation-for="AccountType" class="text-danger small d-block"></span>
+        </section>
+
+        <section class="landing-form-section landing-form-section-checks" aria-label="Agreements">
+            <div class="form-check landing-check">
+                <input class="form-check-input" asp-for="AgreeTerms" id="agree-terms" />
+                <label class="form-check-label" for="agree-terms">I agree to Terms &amp; Conditions</label>
+            </div>
+            <span asp-validation-for="AgreeTerms" class="text-danger small d-block"></span>
+            <div class="form-check landing-check">
+                <input class="form-check-input" asp-for="AgreePrivacy" id="agree-privacy" />
+                <label class="form-check-label" for="agree-privacy">I agree to Privacy Policy</label>
+            </div>
+            <span asp-validation-for="AgreePrivacy" class="text-danger small d-block"></span>
+        </section>
+
+        <div class="landing-register-actions">
+            <button type="submit" class="btn landing-login-btn landing-register-submit">Create Account</button>
+            <a class="btn landing-cancel-btn" asp-controller="Account" asp-action="Login">Cancel</a>
+        </div>
+    </form>
+
+    <p class="landing-register-footer mb-0">
+        Already have an account? <a asp-controller="Account" asp-action="Login">Login</a>.
+    </p>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

@@ -1,12 +1,18 @@
 @model LoginViewModel
-<div class="landing-signin-card">
-    <h2 class="landing-signin-title">Sign In</h2>
-    <form asp-controller="Account" asp-action="Login" method="post" class="landing-signin-form">
+<div class="landing-login-card">
+    @if (TempData["AccountCreated"] as string == "1")
+    {
+        <div class="alert alert-success py-2 px-3 small mb-3 text-center" role="status">Account created. You can sign in now.</div>
+    }
+    <h2 class="landing-login-title">Log In</h2>
+    <form asp-controller="Account" asp-action="Login" method="post" class="landing-login-form">
         <div asp-validation-summary="ModelOnly" class="text-danger small mb-2"></div>
         <input asp-for="Username" type="text" class="form-control landing-input" placeholder="Email" autocomplete="username" />
         <span asp-validation-for="Username" class="text-danger small d-block"></span>
         <input asp-for="Password" type="password" class="form-control landing-input" placeholder="Password" autocomplete="current-password" />
         <span asp-validation-for="Password" class="text-danger small d-block"></span>
-        <button type="submit" class="btn landing-signin-btn w-100">Sign In</button>
+        <button type="submit" class="btn landing-login-btn w-100">Log In</button>
     </form>
+    <a class="landing-forgot-pw" asp-controller="Account" asp-action="ForgotPassword">Forgot Password?</a>
+    <a class="landing-create-account" asp-controller="Account" asp-action="Register">Create Account</a>
 </div>

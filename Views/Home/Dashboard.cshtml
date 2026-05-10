@@ -1,11 +1,76 @@
 @{
-    ViewData["Title"] = "Home";
-    var role = ViewBag.Role as string ?? "";
-    var username = ViewBag.Username as string ?? "User";
+    ViewData["Title"] = "Dashboard";
+    var role = (Model as TechMove.Models.DashboardViewModel)?.Role
+               ?? (ViewBag.Role as string ?? "");
+    var username = (Model as TechMove.Models.DashboardViewModel)?.Username
+                   ?? (ViewBag.Username as string ?? "User");
+
+    if (role == "Admin")
+    {
+        Layout = "_LayoutDashboard";
+    }
 }
 
-<h1>Home Page</h1>
-<p class="lead">Welcome, <strong>@username</strong> (@role).</p>
+@if (role == "Admin" && Model is TechMove.Models.DashboardViewModel vm)
+{
+    <div class="dash-hero">
+        <div class="dash-hero-inner">
+            <h1 class="dash-title">TechMove GLMS Admin Dashboard</h1>
+            <h2 class="dash-subtitle">Dashboard Overview</h2>
+            <div class="dash-welcome">Welcome back, <span class="dash-pill">@username</span></div>
+
+            <div class="dash-stats">
+                <div class="dash-card">
+                    <div class="dash-card-label">Active Contracts:</div>
+                    <div class="dash-card-value">@vm.ActiveContracts</div>
+                </div>
+                <div class="dash-card">
+                    <div class="dash-card-label">Pending Requests:</div>
+                    <div class="dash-card-value">@vm.PendingRequests</div>
+                </div>
+                <div class="dash-card">
+                    <div class="dash-card-label">Total Clients:</div>
+                    <div class="dash-card-value">@vm.TotalClients</div>
+                </div>
+                <div class="dash-card dash-card-wide">
+                    <div class="dash-card-label">Currency Rate:</div>
+                    <div class="dash-card-rate">1 USD = @vm.CurrencyRateUsdToZar.ToString("0.00") ZAR</div>
+                </div>
+            </div>
+
+            <div class="dash-section">
+                <h3 class="dash-section-title">Recent Activity</h3>
+                <div class="dash-table-wrap">
+                    <table class="table dash-table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Contract ID</th>
+                                <th>Client Name</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in vm.RecentActivity)
+                            {
+                                <tr>
+                                    <td>@item.ContractId</td>
+                                    <td>@item.ClientName</td>
+                                    <td>
+                                        <span class="dash-status @($"dash-status-{item.Status}".ToLowerInvariant())">@item.Status</span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <h1>Home Page</h1>
+    <p class="lead">Welcome, <strong>@username</strong> (@role).</p>
 
 @if (role == "Admin")
 {
@@ -32,4 +97,13 @@ else if (role == "GeneralUser")
         <li><a asp-controller="Contracts" asp-action="Create">Upload signed agreement (PDF)</a></li>
         <li>Download agreement files from contract list</li>
     </ul>
+}
+else if (role == "Viewer")
+{
+    <div class="alert alert-secondary">Viewer access: read-only contract browsing.</div>
+    <ul>
+        <li><a asp-controller="Contracts" asp-action="Index">View contracts</a></li>
+        <li>Contract creation, service requests, and admin search are not available for this role.</li>
+    </ul>
+}
 }

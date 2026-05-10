@@ -1,0 +1,59 @@
+@using TechMove.Security
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/TechMove.styles.css" asp-append-version="true" />
+</head>
+<body class="dash-body">
+    <div class="dash-shell">
+        <aside class="dash-sidebar" aria-label="Sidebar">
+            <div class="dash-sidebrand">TechMove</div>
+            <nav class="dash-sidenav">
+                <a class="dash-sideitem" asp-controller="Home" asp-action="Dashboard"><i class="bi bi-house-door"></i><span>Home</span></a>
+                <a class="dash-sideitem" asp-controller="Home" asp-action="Dashboard"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a>
+                <a class="dash-sideitem" asp-controller="Contracts" asp-action="Index"><i class="bi bi-journal-text"></i><span>View all contracts</span></a>
+                <a class="dash-sideitem" asp-controller="Home" asp-action="ExportReport"><i class="bi bi-download"></i><span>Export report</span></a>
+            </nav>
+        </aside>
+
+        <div class="dash-content">
+            <header class="dash-topbar">
+                <nav class="dash-topnav" aria-label="Top navigation">
+                    <a class="dash-toplink" asp-controller="Home" asp-action="Index">Landing</a>
+                    <a class="dash-toplink" asp-controller="Home" asp-action="Dashboard">Home</a>
+                    <a class="dash-toplink" asp-controller="Home" asp-action="Privacy">Privacy</a>
+                    <a class="dash-toplink" asp-controller="Contracts" asp-action="Index">Contracts</a>
+                    <a class="dash-toplink" asp-controller="ServiceRequests" asp-action="Index">Service Requests</a>
+                </nav>
+                <div class="dash-topright">
+                    @if (Context.IsLoggedIn())
+                    {
+                        <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+                            <button type="submit" class="dash-logout-btn">Logout</button>
+                        </form>
+                    }
+                </div>
+            </header>
+
+            <main role="main" class="dash-main">
+                @RenderBody()
+            </main>
+        </div>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
+
