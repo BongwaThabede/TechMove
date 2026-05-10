@@ -6,6 +6,7 @@ using TechMove.Models;
 using TechMove.Services;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using TechMove.Security;
 
 namespace TechMove.Controllers
 {
@@ -37,6 +38,8 @@ namespace TechMove.Controllers
         // GET: Contracts
         public async Task<IActionResult> Index()
         {
+            if (!HttpContext.IsLoggedIn()) return RedirectToAction("Login", "Account");
+
             await _contractStatusService.SyncAllAsync(DateTime.UtcNow.Date);
 
             var contracts = await _context.Contracts
@@ -48,6 +51,7 @@ namespace TechMove.Controllers
         // GET: Contracts/Details/5
         public async Task<IActionResult> Details(int? id)
         {
+            if (!HttpContext.IsLoggedIn()) return RedirectToAction("Login", "Account");
             if (id == null) return NotFound();
 
             var contract = await _context.Contracts
@@ -67,6 +71,9 @@ namespace TechMove.Controllers
         // GET: Contracts/Create
         public IActionResult Create()
         {
+            if (!HttpContext.IsLoggedIn()) return RedirectToAction("Login", "Account");
+            if (!HttpContext.HasAnyRole("GeneralUser", "Admin")) return Forbid();
+
             ViewData["ClientId"] = new SelectList(_context.Clients, "Id", "Name");
             return View();
         }
@@ -76,6 +83,9 @@ namespace TechMove.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,ClientId,StartDate,EndDate,Status,ServiceLevel")] Contract contract, IFormFile signedAgreement)
         {
+            if (!HttpContext.IsLoggedIn()) return RedirectToAction("Login", "Account");
+            if (!HttpContext.HasAnyRole("GeneralUser", "Admin")) return Forbid();
+
             if (signedAgreement != null && signedAgreement.Length > 0)
             {
                 // Validate PDF
@@ -116,6 +126,9 @@ namespace TechMove.Controllers
         // GET: Contracts/Search
         public async Task<IActionResult> Search(DateTime? startDate, DateTime? endDate, string status)
         {
+            if (!HttpContext.IsLoggedIn()) return RedirectToAction("Login", "Account");
+            if (!HttpContext.HasAnyRole("Admin")) return Forbid();
+
             await _contractStatusService.SyncAllAsync(DateTime.UtcNow.Date);
 
             var query = _context.Contracts.Include(c => c.Client).AsQueryable();
@@ -144,6 +157,8 @@ namespace TechMove.Controllers
         // GET: Contracts/DownloadAgreement/5
         public async Task<IActionResult> DownloadAgreement(int id)
         {
+            if (!HttpContext.IsLoggedIn()) return RedirectToAction("Login", "Account");
+
             var contract = await _context.Contracts.FindAsync(id);
             if (contract == null || string.IsNullOrEmpty(contract.SignedAgreementPath))
                 return NotFound();

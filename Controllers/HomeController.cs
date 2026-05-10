@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 using TechMove.Models;
+using TechMove.Security;
 
 namespace TechMove.Controllers
 {
@@ -15,6 +16,23 @@ namespace TechMove.Controllers
 
         public IActionResult Index()
         {
+            if (HttpContext.IsLoggedIn())
+            {
+                return RedirectToAction(nameof(Dashboard));
+            }
+
+            return View(new LoginViewModel());
+        }
+
+        public IActionResult Dashboard()
+        {
+            if (!HttpContext.IsLoggedIn())
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            ViewBag.Username = HttpContext.GetCurrentUser();
+            ViewBag.Role = HttpContext.GetCurrentRole();
             return View();
         }
 

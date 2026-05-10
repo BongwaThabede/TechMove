@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using TechMove.Data;
 using TechMove.Models;
 using TechMove.Services;
+using TechMove.Security;
 
 namespace TechMove.Controllers
 {
@@ -29,6 +30,9 @@ namespace TechMove.Controllers
         // GET: ServiceRequests/Create
         public async Task<IActionResult> Create(int? contractId)
         {
+            if (!HttpContext.IsLoggedIn()) return RedirectToAction("Login", "Account");
+            if (!HttpContext.HasAnyRole("LogisticsManager", "Admin")) return Forbid();
+
             if (contractId == null) return NotFound();
 
             var contract = await _context.Contracts.FindAsync(contractId);
@@ -59,6 +63,9 @@ namespace TechMove.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("ContractId,Description,Cost,Status")] ServiceRequest serviceRequest)
         {
+            if (!HttpContext.IsLoggedIn()) return RedirectToAction("Login", "Account");
+            if (!HttpContext.HasAnyRole("LogisticsManager", "Admin")) return Forbid();
+
             // Validate contract status
             var contract = await _context.Contracts.FindAsync(serviceRequest.ContractId);
             if (contract != null && _contractStatusService.SyncSingle(contract, DateTime.UtcNow.Date))
@@ -91,6 +98,9 @@ namespace TechMove.Controllers
         // GET: ServiceRequests
         public async Task<IActionResult> Index()
         {
+            if (!HttpContext.IsLoggedIn()) return RedirectToAction("Login", "Account");
+            if (!HttpContext.HasAnyRole("LogisticsManager", "Admin")) return Forbid();
+
             var serviceRequests = await _context.ServiceRequests
                 .Include(s => s.Contract)
                 .ThenInclude(c => c!.Client)

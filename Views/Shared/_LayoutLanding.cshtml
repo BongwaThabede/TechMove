@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/TechMove.styles.css" asp-append-version="true" />
+</head>
+<body class="landing-body">
+    <div class="landing-root">
+        <header class="landing-header">
+            <h1 class="landing-brand">TechMove GLMS</h1>
+            <nav class="landing-nav" aria-label="Primary">
+                <a class="landing-nav-link" asp-controller="Home" asp-action="Index">Home</a>
+                <a class="landing-nav-link" asp-controller="Home" asp-action="Privacy">Privacy</a>
+                <a class="landing-nav-link" asp-controller="Contracts" asp-action="Index">Contracts</a>
+                <a class="landing-nav-link" asp-controller="ServiceRequests" asp-action="Index">Service Request</a>
+            </nav>
+        </header>
+        <main class="landing-main" role="main">
+            @RenderBody()
+        </main>
+    </div>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

@@ -1,0 +1,12 @@
+@model LoginViewModel
+<div class="landing-signin-card">
+    <h2 class="landing-signin-title">Sign In</h2>
+    <form asp-controller="Account" asp-action="Login" method="post" class="landing-signin-form">
+        <div asp-validation-summary="ModelOnly" class="text-danger small mb-2"></div>
+        <input asp-for="Username" type="text" class="form-control landing-input" placeholder="Email" autocomplete="username" />
+        <span asp-validation-for="Username" class="text-danger small d-block"></span>
+        <input asp-for="Password" type="password" class="form-control landing-input" placeholder="Password" autocomplete="current-password" />
+        <span asp-validation-for="Password" class="text-danger small d-block"></span>
+        <button type="submit" class="btn landing-signin-btn w-100">Sign In</button>
+    </form>
+</div>

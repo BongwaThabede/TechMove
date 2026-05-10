@@ -1,0 +1,35 @@
+@{
+    ViewData["Title"] = "Home";
+    var role = ViewBag.Role as string ?? "";
+    var username = ViewBag.Username as string ?? "User";
+}
+
+<h1>Home Page</h1>
+<p class="lead">Welcome, <strong>@username</strong> (@role).</p>
+
+@if (role == "Admin")
+{
+    <div class="alert alert-primary">Administrator access enabled: full oversight and management.</div>
+    <ul>
+        <li><a asp-controller="Contracts" asp-action="Index">View all contracts</a></li>
+        <li><a asp-controller="Contracts" asp-action="Search">Search/filter by date and status</a></li>
+        <li><a asp-controller="ServiceRequests" asp-action="Index">View all service requests</a></li>
+    </ul>
+}
+else if (role == "LogisticsManager")
+{
+    <div class="alert alert-success">Logistics Manager access enabled.</div>
+    <ul>
+        <li><a asp-controller="Contracts" asp-action="Index">View contract details and status</a></li>
+        <li><a asp-controller="ServiceRequests" asp-action="Index">Manage service requests</a></li>
+    </ul>
+}
+else if (role == "GeneralUser")
+{
+    <div class="alert alert-info">General User access enabled.</div>
+    <ul>
+        <li><a asp-controller="Contracts" asp-action="Index">View contracts</a></li>
+        <li><a asp-controller="Contracts" asp-action="Create">Upload signed agreement (PDF)</a></li>
+        <li>Download agreement files from contract list</li>
+    </ul>
+}
