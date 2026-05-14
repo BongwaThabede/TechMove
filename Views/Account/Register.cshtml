@@ -73,11 +73,19 @@
                 </div>
                 <div class="form-check landing-radio">
                     <input class="form-check-input" type="radio" asp-for="AccountType" value="GeneralUser" id="acc-client" />
-                    <label class="form-check-label" for="acc-client">Client/User</label>
+                    <label class="form-check-label" for="acc-client">Client</label>
                 </div>
                 <div class="form-check landing-radio">
-                    <input class="form-check-input" type="radio" asp-for="AccountType" value="Viewer" id="acc-viewer" />
-                    <label class="form-check-label" for="acc-viewer">Viewer</label>
+                    <input class="form-check-input" type="radio" asp-for="AccountType" value="Finance Officer" id="acc-finance" />
+                    <label class="form-check-label" for="acc-finance">Finance Officer</label>
+                </div>
+                <div class="form-check landing-radio">
+                    <input class="form-check-input" type="radio" asp-for="AccountType" value="Administrator" id="acc-admin" />
+                    <label class="form-check-label" for="acc-viewer">Administrator</label>
+                </div>
+                <div class="form-check landing-radio">
+                    <input class="form-check-input" type="radio" asp-for="AccountType" value=" Contract Manager" id="acc-contract" />
+                    <label class="form-check-label" for="acc-contract">Contract Manager</label>
                 </div>
             </div>
             <span asp-validation-for="AccountType" class="text-danger small d-block"></span>
