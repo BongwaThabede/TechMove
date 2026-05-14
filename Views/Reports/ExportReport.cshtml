@@ -1,0 +1,117 @@
+@model TechMove.Models.ContractSearchViewModel
+@{
+    ViewData["Title"] = "Export Report";
+}
+
+<div class="dashboard-container fade-in">
+    <h1 class="mb-4"><i class="fas fa-download"></i> Export Contract Summary Report</h1>
+    
+    <div class="row">
+        <!-- Filter Options -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Filter Report Data</h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="ExportReport" method="get">
+                        <div class="form-group mb-3">
+                            <label>Status</label>
+                            <select name="Status" class="form-control" asp-items="@(new SelectList(new[] { "", "Active", "Expired", "OnHold", "Draft" }))">
+                                <option value="">All Statuses</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group mb-3">
+                            <label>Date Range</label>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <input type="date" name="StartDateFrom" class="form-control" />
+                                </div>
+                                <div class="col-6">
+                                    <input type="date" name="StartDateTo" class="form-control" />
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group mb-3">
+                            <label>Region</label>
+                            <select name="Region" class="form-control">
+                                <option value="">All Regions</option>
+                                <option value="South Africa">South Africa</option>
+                                <option value="Sub-Saharan Africa">Sub-Saharan Africa</option>
+                                <option value="Europe">Europe</option>
+                                <option value="Asia">Asia</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group mb-4">
+                            <label>Export Format</label>
+                            <div class="btn-group w-100" role="group">
+                                <input type="radio" class="btn-check" name="format" id="pdf" value="pdf" checked />
+                                <label class="btn btn-outline-primary" for="pdf">
+                                    <i class="fas fa-file-pdf"></i> PDF
+                                </label>
+                                <input type="radio" class="btn-check" name="format" id="excel" value="excel" />
+                                <label class="btn btn-outline-success" for="excel">
+                                    <i class="fas fa-file-excel"></i> Excel
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-download"></i> Generate & Download Report
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Report Preview -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Report Preview</h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center py-4">
+                        <i class="fas fa-file-contract fa-4x text-muted mb-3"></i>
+                        <p class="text-muted">
+                            Apply filters and click "Generate & Download" to create your Contract Summary Report.
+                        </p>
+                        <p class="small text-muted">
+                            <strong>Report includes:</strong> Contract ID, Client, Value (USD/ZAR), 
+                            Dates, Status, Service Level, and linked Service Requests count.
+                        </p>
+                    </div>
+                    
+                    <!-- Sample Data Preview -->
+                    <table class="table table-sm table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Contract ID</th>
+                                <th>Client</th>
+                                <th>Value (USD)</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>CTR-00001</td>
+                                <td>Alpha Logistics Ltd.</td>
+                                <td>$45,000</td>
+                                <td><span class="status-badge status-active">Active</span></td>
+                            </tr>
+                            <tr>
+                                <td>CTR-00003</td>
+                                <td>Gamma Supply Co.</td>
+                                <td>$67,200</td>
+                                <td><span class="status-badge status-active">Active</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

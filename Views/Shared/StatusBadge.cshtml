@@ -1,0 +1,29 @@
+@model string
+@{
+    var badgeClass = Model?.ToLower() switch
+    {
+        "active" => "status-active",
+        "expired" => "status-expired",
+        "onhold" => "status-onhold",
+        "draft" => "status-draft",
+        "pending" => "status-pending",
+        "inprogress" => "status-inprogress",
+        "completed" => "status-completed",
+        "rejected" => "status-rejected",
+        _ => "status-default"
+    };
+    
+    var displayText = Model switch
+    {
+        "Active" => "✅ Active",
+        "Expired" => "❌ Expired",
+        "OnHold" => "⏸️ On Hold",
+        "Draft" => "📝 Draft",
+        "Pending" => "⏳ Pending",
+        "InProgress" => "🔄 In Progress",
+        "Completed" => "✅ Completed",
+        "Rejected" => "❌ Rejected",
+        _ => Model
+    };
+}
+<span class="status-badge @badgeClass">@displayText</span>

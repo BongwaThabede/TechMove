@@ -1,0 +1,113 @@
+@model TechMove.Models.FinanceDashboardViewModel
+@{
+    ViewData["Title"] = "Finance Dashboard";
+}
+
+<div class="page-header">
+    <h2><i class="bi bi-currency-dollar me-2"></i>Finance Dashboard</h2>
+    <p class="text-muted">Financial overview and reporting</p>
+</div>
+
+<!-- Key Metrics -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon bg-primary text-white mb-3">
+                <i class="bi bi-currency-dollar fs-2"></i>
+            </div>
+            <div class="stat-value">$ @Model.TotalContractValueUSD.ToString("N0")</div>
+            <div class="stat-label">Total Contract Value (USD)</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon bg-success text-white mb-3">
+                <i class="bi bi-currency-exchange fs-2"></i>
+            </div>
+            <div class="stat-value">R @Model.TotalContractValueZAR.ToString("N0")</div>
+            <div class="stat-label">Total Contract Value (ZAR)</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon bg-warning text-white mb-3">
+                <i class="bi bi-file-earmark-x fs-2"></i>
+            </div>
+            <div class="stat-value">@Model.PendingInvoices</div>
+            <div class="stat-label">Pending Invoices</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon bg-danger text-white mb-3">
+                <i class="bi bi-exclamation-triangle fs-2"></i>
+            </div>
+            <div class="stat-value">@Model.ExpiringContracts.Count</div>
+            <div class="stat-label">Expiring Contracts (30 days)</div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-exclamation-triangle me-2"></i>Expiring Contracts
+            </div>
+            <div class="card-body">
+                @if (Model.ExpiringContracts.Any())
+                {
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Contract #</th>
+                                <th>Client</th>
+                                <th>End Date</th>
+                                <th>Value (ZAR)</th>
+                                <th>Days Left</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var contract in Model.ExpiringContracts.OrderBy(c => c.EndDate))
+                            {
+                                <tr>
+                                    <td>@contract.ContractNumber</td>
+                                    <td>@contract.Client?.Name</td>
+                                    <td>@contract.EndDate.ToString("dd MMM yyyy")</td>
+                                    <!-- ✅ FIXED: ContractValueZAR is non-nullable decimal -->
+                                    <td>R @contract.ContractValueZAR.ToString("N2")</td>
+                                    <td>
+                                        <!-- ✅ FIXED: DaysUntilExpiry is non-nullable int -->
+                                        <span class="badge bg-@(contract.DaysUntilExpiry <= 7 ? "danger" : "warning")">
+                                            @contract.DaysUntilExpiry days
+                                        </span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <p class="text-muted mb-0">No contracts expiring soon.</p>
+                }
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-lightning me-2"></i>Quick Actions
+            </div>
+            <div class="card-body">
+                <a asp-action="Reports" class="btn btn-primary w-100 mb-2">
+                    <i class="bi bi-bar-chart me-2"></i>Financial Reports
+                </a>
+                <a asp-controller="Contracts" asp-action="Index" class="btn btn-outline-primary w-100">
+                    <i class="bi bi-file-earmark-text me-2"></i>View All Contracts
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

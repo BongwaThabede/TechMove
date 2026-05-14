@@ -16,7 +16,7 @@ namespace TechMove.Controllers
             },
             StringComparer.OrdinalIgnoreCase);
 
-        private static readonly ConcurrentDictionary<string, RegisteredUserProfile> RegisteredProfiles = new(StringComparer.OrdinalIgnoreCase);
+       private static readonly ConcurrentDictionary<string, TechMove.Models.RegisteredUserProfile> RegisteredProfiles = new(StringComparer.OrdinalIgnoreCase);
 
         [HttpGet]
         public IActionResult Login()
@@ -82,7 +82,7 @@ namespace TechMove.Controllers
                 return View(model);
             }
 
-            RegisteredProfiles[key] = new RegisteredUserProfile
+            RegisteredProfiles[key] = new TechMove.Models.RegisteredUserProfile
             {
                 FirstName = model.FirstName.Trim(),
                 LastName = model.LastName.Trim(),

@@ -1,0 +1,121 @@
+@model TechMove.Models.ClientDashboardViewModel
+@{
+    ViewData["Title"] = "Client Dashboard";
+}
+
+<div class="page-header">
+    <h2><i class="bi bi-person-circle me-2"></i>Welcome, @Model.Client?.Name</h2>
+    <p class="text-muted">Your contracts and service requests overview</p>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="d-flex align-items-center">
+                <div class="stat-icon bg-success text-white me-3">
+                    <i class="bi bi-file-earmark-check"></i>
+                </div>
+                <div>
+                    <div class="stat-value">@Model.ActiveContracts.Count</div>
+                    <div class="stat-label">Active Contracts</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="d-flex align-items-center">
+                <div class="stat-icon bg-primary text-white me-3">
+                    <i class="bi bi-headset"></i>
+                </div>
+                <div>
+                    <div class="stat-value">@Model.OpenRequests.Count</div>
+                    <div class="stat-label">Open Requests</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="d-flex align-items-center">
+                <div class="stat-icon bg-info text-white me-3">
+                    <i class="bi bi-calendar-check"></i>
+                </div>
+                <div>
+                    <div class="stat-value">@Model.Client?.Region</div>
+                    <div class="stat-label">Region</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-file-earmark-text me-2"></i>My Active Contracts</span>
+                <a asp-action="MyContracts" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body">
+                @if (Model.ActiveContracts.Any())
+                {
+                    <div class="list-group list-group-flush">
+                        @foreach (var contract in Model.ActiveContracts.Take(3))
+                        {
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>@contract.ContractNumber</strong><br />
+                                        <small class="text-muted">@contract.ServiceLevel</small>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="badge bg-success">Active</span><br />
+                                        <!-- ✅ FIX: Use null-conditional operator (?.) and fallback for nullable decimal -->
+                                        <small>R @(contract.ContractValueZAR.ToString("N0") ?? "0.00")</small>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted mb-0">No active contracts.</p>
+                }
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-headset me-2"></i>Recent Service Requests</span>
+                <a asp-action="MyServiceRequests" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body">
+                @if (Model.OpenRequests.Any())
+                {
+                    <div class="list-group list-group-flush">
+                        @foreach (var request in Model.OpenRequests.Take(3))
+                        {
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>@request.RequestNumber</strong><br />
+                                        <small class="text-muted">@request.Description.Substring(0, Math.Min(50, request.Description.Length))...</small>
+                                    </div>
+                                    <span class="badge bg-primary">@request.Status</span>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted mb-0">No open service requests.</p>
+                }
+            </div>
+        </div>
+    </div>
+</div>
