@@ -30,7 +30,8 @@ namespace TechMove.Controllers
         // GET: ServiceRequests/Create
         public async Task<IActionResult> Create(int? contractId)
         {
-            if (!HttpContext.IsLoggedIn()) return RedirectToAction("Login", "Account");
+            // ✅ FIXED: Use Identity pages for login redirect
+            if (!HttpContext.IsLoggedIn()) return RedirectToPage("/Account/Login", new { area = "Identity" });
             if (!HttpContext.HasAnyRole("LogisticsManager", "Admin")) return Forbid();
 
             if (contractId == null) return NotFound();
@@ -43,14 +44,12 @@ namespace TechMove.Controllers
                 await _context.SaveChangesAsync();
             }
 
-            // Workflow rule: only active contracts can raise requests.
             if (!contract.IsValidForServiceRequest(DateTime.UtcNow.Date))
             {
                 TempData["ErrorMessage"] = $"Cannot create service request: Contract must be Active. Current status is {contract.Status}.";
-                return RedirectToAction("Details", "Contracts", new { id = contractId });
+                return RedirectToAction("ManagerDashboard", "Dashboard");
             }
 
-            // Get current exchange rate
             var rate = await _currencyService.GetUSDToZARRateAsync();
             ViewBag.CurrentRate = rate;
             ViewBag.ContractId = contractId;
@@ -61,12 +60,11 @@ namespace TechMove.Controllers
         // POST: ServiceRequests/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("ContractId,Description,Cost,Status")] ServiceRequest serviceRequest)
+        public async Task<IActionResult> Create([Bind("ContractId,Description,Cost,Status,Priority")] ServiceRequest serviceRequest)
         {
-            if (!HttpContext.IsLoggedIn()) return RedirectToAction("Login", "Account");
+            if (!HttpContext.IsLoggedIn()) return RedirectToPage("/Account/Login", new { area = "Identity" });
             if (!HttpContext.HasAnyRole("LogisticsManager", "Admin")) return Forbid();
 
-            // Validate contract status
             var contract = await _context.Contracts.FindAsync(serviceRequest.ContractId);
             if (contract != null && _contractStatusService.SyncSingle(contract, DateTime.UtcNow.Date))
             {
@@ -76,34 +74,35 @@ namespace TechMove.Controllers
             if (contract == null || !contract.IsValidForServiceRequest(DateTime.UtcNow.Date))
             {
                 TempData["ErrorMessage"] = "Cannot create service request: only active contracts are allowed.";
-                return RedirectToAction("Index", "Contracts");
+                return RedirectToAction("ManagerDashboard", "Dashboard");
             }
 
-            // Get exchange rate and calculate ZAR cost
             var rate = await _currencyService.GetUSDToZARRateAsync();
             serviceRequest.CostInZAR = _currencyService.ConvertUSDToZAR(serviceRequest.Cost, rate);
+            serviceRequest.RequestNumber = $"REQ-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString().Substring(0, 6)}";
 
             if (ModelState.IsValid)
             {
                 _context.Add(serviceRequest);
                 await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                TempData["SuccessMessage"] = "Service request created successfully!";
+                return RedirectToAction("ManagerDashboard", "Dashboard");
             }
 
             ViewBag.CurrentRate = rate;
-            ViewData["ContractId"] = new SelectList(_context.Contracts, "Id", "Id", serviceRequest.ContractId);
             return View(serviceRequest);
         }
 
         // GET: ServiceRequests
         public async Task<IActionResult> Index()
         {
-            if (!HttpContext.IsLoggedIn()) return RedirectToAction("Login", "Account");
-            if (!HttpContext.HasAnyRole("LogisticsManager", "Admin")) return Forbid();
+            if (!HttpContext.IsLoggedIn()) return RedirectToPage("/Account/Login", new { area = "Identity" });
+            if (!HttpContext.HasAnyRole("LogisticsManager", "Admin", "Finance")) return Forbid();
 
             var serviceRequests = await _context.ServiceRequests
                 .Include(s => s.Contract)
                 .ThenInclude(c => c!.Client)
+                .OrderByDescending(s => s.CreatedDate)
                 .ToListAsync();
             return View(serviceRequests);
         }

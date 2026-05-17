@@ -1,0 +1,63 @@
+@model TechMove.Models.Client
+@{
+    ViewData["Title"] = "Add New Client";
+    Layout = "_LayoutDashboard";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-6 mx-auto">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4><i class="fas fa-user-plus me-2"></i>Add New Client</h4>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Create" method="post">
+                        @Html.AntiForgeryToken()
+                        
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                        <div class="mb-3">
+                            <label asp-for="Name" class="form-label fw-bold"></label>
+                            <input asp-for="Name" class="form-control" placeholder="Enter company/client name" />
+                            <span asp-validation-for="Name" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="ContactDetails" class="form-label fw-bold"></label>
+                            <textarea asp-for="ContactDetails" class="form-control" rows="3" placeholder="Email, phone, address..."></textarea>
+                            <span asp-validation-for="ContactDetails" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Region" class="form-label fw-bold"></label>
+                            <select asp-for="Region" class="form-select">
+                                <option value="">-- Select Region --</option>
+                                <option value="Africa">Africa</option>
+                                <option value="Asia Pacific">Asia Pacific</option>
+                                <option value="Europe">Europe</option>
+                                <option value="Middle East">Middle East</option>
+                                <option value="North America">North America</option>
+                                <option value="South America">South America</option>
+                            </select>
+                            <span asp-validation-for="Region" class="text-danger"></span>
+                        </div>
+
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Create Client
+                            </button>
+                            <a asp-action="Index" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Back to List
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

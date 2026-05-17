@@ -1,70 +1,384 @@
 @model IEnumerable<TechMove.Models.Contract>
 @{
-    ViewData["Title"] = "Contracts";
+    ViewData["Title"] = "Contracts Management";
+    Layout = "_LayoutDashboard";
+    var statusFilter = Context.Request.Query["status"].ToString();
 }
 
-<h1>Contracts</h1>
-
-<p>
-    <a class="btn btn-primary" asp-action="Create">Create Contract</a>
-</p>
-
-<form asp-action="Search" method="get" class="row g-2 mb-3">
-    <div class="col-md-3">
-        <input type="date" name="startDate" class="form-control" />
-    </div>
-    <div class="col-md-3">
-        <input type="date" name="endDate" class="form-control" />
-    </div>
-    <div class="col-md-3">
-        <select name="status" class="form-select">
-            <option value="">All statuses</option>
-            <option>Draft</option>
-            <option>Active</option>
-            <option>Expired</option>
-            <option>OnHold</option>
-        </select>
-    </div>
-    <div class="col-md-3">
-        <button type="submit" class="btn btn-outline-secondary">Filter</button>
-    </div>
-</form>
-
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>Client</th>
-            <th>Status</th>
-            <th>Start Date</th>
-            <th>End Date</th>
-            <th>Service Level</th>
-            <th>Agreement</th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-    @foreach (var item in Model)
-    {
-        <tr>
-            <td>@item.Client?.Name</td>
-            <td>@item.Status</td>
-            <td>@item.StartDate.ToShortDateString()</td>
-            <td>@item.EndDate.ToShortDateString()</td>
-            <td>@item.ServiceLevel</td>
-            <td>
-                @if (!string.IsNullOrWhiteSpace(item.SignedAgreementPath))
-                {
-                    <a asp-action="DownloadAgreement" asp-route-id="@item.Id">Download PDF</a>
-                }
-                else
-                {
-                    <span class="text-muted">None</span>
-                }
-            </td>
-            <td>
-                <a asp-action="Details" asp-route-id="@item.Id">Details</a>
-            </td>
-        </tr>
+<style>
+    /* Contract Card Styles */
+    .contract-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
     }
-    </tbody>
-</table>
+    
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.25rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        transition: transform 0.2s;
+        text-align: center;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+        font-weight: bold;
+        margin: 0;
+        color: #2c3e50;
+    }
+    
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.85rem;
+        margin: 0;
+    }
+    
+    /* Filter Buttons */
+    .filter-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+        padding: 0.5rem 0;
+    }
+    
+    .filter-btn {
+        padding: 0.5rem 1.25rem;
+        border-radius: 25px;
+        border: 1px solid #dee2e6;
+        background: white;
+        color: #495057;
+        text-decoration: none;
+        font-size: 0.9rem;
+        transition: all 0.2s;
+    }
+    
+    .filter-btn:hover {
+        background: #f8f9fa;
+        border-color: #667eea;
+    }
+    
+    .filter-btn.active {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        border-color: transparent;
+    }
+    
+    /* Contract Cards Grid */
+    .contracts-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+        gap: 1.5rem;
+    }
+    
+    .contract-card {
+        background: white;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.07);
+        transition: all 0.3s ease;
+    }
+    
+    .contract-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 20px rgba(0,0,0,0.1);
+    }
+    
+    .card-header {
+        padding: 1rem 1.25rem;
+        background: linear-gradient(135deg, #f8f9fa, #fff);
+        border-bottom: 1px solid #e9ecef;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .contract-number {
+        font-weight: 700;
+        font-size: 1rem;
+        color: #2c3e50;
+    }
+    
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    
+    .status-active { background: #d4edda; color: #155724; }
+    .status-draft { background: #e2e3e5; color: #383d41; }
+    .status-expired { background: #f8d7da; color: #721c24; }
+    .status-onhold { background: #fff3cd; color: #856404; }
+    
+    .card-body {
+        padding: 1.25rem;
+    }
+    
+    .client-info {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px dashed #e9ecef;
+    }
+    
+    .client-icon {
+        width: 40px;
+        height: 40px;
+        background: #667eea;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+    }
+    
+    .client-name {
+        font-weight: 600;
+        font-size: 1rem;
+        margin: 0;
+    }
+    
+    .client-contact {
+        font-size: 0.75rem;
+        color: #6c757d;
+        margin: 0;
+    }
+    
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.75rem;
+        font-size: 0.85rem;
+    }
+    
+    .info-label {
+        color: #6c757d;
+        font-weight: 500;
+    }
+    
+    .info-value {
+        font-weight: 600;
+        color: #2c3e50;
+    }
+    
+    .expiry-warning {
+        background: #fff3cd;
+        padding: 0.5rem;
+        border-radius: 8px;
+        margin-top: 0.75rem;
+        font-size: 0.75rem;
+        text-align: center;
+    }
+    
+    .expiry-danger {
+        background: #f8d7da;
+        color: #721c24;
+    }
+    
+    .card-footer {
+        padding: 0.75rem 1.25rem;
+        background: #f8f9fa;
+        border-top: 1px solid #e9ecef;
+        display: flex;
+        justify-content: space-between;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+    
+    .btn-sm {
+        padding: 0.25rem 0.75rem;
+        font-size: 0.8rem;
+        border-radius: 8px;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        background: white;
+        border-radius: 16px;
+    }
+    
+    .empty-icon {
+        font-size: 4rem;
+        color: #cbd5e0;
+        margin-bottom: 1rem;
+    }
+    
+    /* Responsive - FIXED: Changed @@media to @@@@media to escape Razor */
+    @@@@media (max-width: 768px) {
+        .contracts-grid {
+            grid-template-columns: 1fr;
+        }
+        .filter-buttons {
+            justify-content: center;
+        }
+    }
+</style>
+
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h1 class="mb-0">Contracts Management</h1>
+            <p class="text-muted">Manage and monitor all contracts</p>
+        </div>
+        @if (User.IsInRole("Admin") || User.IsInRole("LogisticsManager"))
+        {
+            <a asp-action="Create" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>New Contract
+            </a>
+        }
+    </div>
+    
+    <!-- Statistics Cards -->
+    <div class="contract-stats">
+        <div class="stat-card">
+            <p class="stat-number">@Model.Count()</p>
+            <p class="stat-label">Total Contracts</p>
+        </div>
+        <div class="stat-card">
+            <p class="stat-number">@Model.Count(c => c.Status == "Active")</p>
+            <p class="stat-label">Active Contracts</p>
+        </div>
+        <div class="stat-card">
+            <p class="stat-number">@Model.Count(c => c.Status == "Expired")</p>
+            <p class="stat-label">Expired Contracts</p>
+        </div>
+        <div class="stat-card">
+            <p class="stat-number">@Model.Count(c => c.Status == "Draft")</p>
+            <p class="stat-label">Drafts</p>
+        </div>
+    </div>
+    
+    <!-- Status Filter Buttons -->
+    <div class="filter-buttons">
+        <a asp-action="Index" class="filter-btn @(string.IsNullOrEmpty(statusFilter) ? "active" : "")">
+            <i class="fas fa-list me-1"></i>All
+        </a>
+        <a asp-action="Index" asp-route-status="Active" class="filter-btn @(statusFilter == "Active" ? "active" : "")">
+            <i class="fas fa-check-circle me-1"></i>Active
+        </a>
+        <a asp-action="Index" asp-route-status="Draft" class="filter-btn @(statusFilter == "Draft" ? "active" : "")">
+            <i class="fas fa-pencil-alt me-1"></i>Draft
+        </a>
+        <a asp-action="Index" asp-route-status="Expired" class="filter-btn @(statusFilter == "Expired" ? "active" : "")">
+            <i class="fas fa-times-circle me-1"></i>Expired
+        </a>
+        <a asp-action="Index" asp-route-status="On Hold" class="filter-btn @(statusFilter == "On Hold" ? "active" : "")">
+            <i class="fas fa-pause-circle me-1"></i>On Hold
+        </a>
+    </div>
+    
+    <!-- Contracts Grid -->
+    @if (Model.Any())
+    {
+        <div class="contracts-grid">
+            @foreach (var contract in Model)
+            {
+                <div class="contract-card">
+                    <div class="card-header">
+                        <span class="contract-number">
+                            <i class="fas fa-file-contract me-2 text-primary"></i>
+                            @(string.IsNullOrEmpty(contract.ContractNumber) ? $"CT-{contract.Id}" : contract.ContractNumber)
+                        </span>
+                        <span class="status-badge status-@(contract.Status?.ToLower().Replace(" ", "").Replace("onhold", "onhold"))">
+                            @contract.Status
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <div class="client-info">
+                            <div class="client-icon">
+                                <i class="fas fa-building"></i>
+                            </div>
+                            <div>
+                                <p class="client-name">@(contract.Client?.Name ?? "Unknown Client")</p>
+                                <p class="client-contact">@(contract.Client?.ContactDetails ?? "No contact info")</p>
+                            </div>
+                        </div>
+                        
+                        <div class="info-row">
+                            <span class="info-label"><i class="fas fa-star me-1"></i>Service Level:</span>
+                            <span class="info-value">@contract.ServiceLevel</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label"><i class="fas fa-calendar-alt me-1"></i>Start Date:</span>
+                            <span class="info-value">@contract.StartDate.ToShortDateString()</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label"><i class="fas fa-calendar-times me-1"></i>End Date:</span>
+                            <span class="info-value">@contract.EndDate.ToShortDateString()</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label"><i class="fas fa-dollar-sign me-1"></i>Value (USD):</span>
+                            <span class="info-value">$@contract.ContractValueUSD.ToString("N2")</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label"><i class="fas fa-rand me-1"></i>Value (ZAR):</span>
+                            <span class="info-value">R @contract.ContractValueZAR.ToString("N2")</span>
+                        </div>
+                        
+                        @if (contract.Status == "Active" && contract.DaysUntilExpiry <= 30 && contract.DaysUntilExpiry > 0)
+                        {
+                            <div class="expiry-warning">
+                                <i class="fas fa-exclamation-triangle me-1"></i>
+                                Expiring in @contract.DaysUntilExpiry days!
+                            </div>
+                        }
+                        @if (contract.Status == "Expired")
+                        {
+                            <div class="expiry-warning expiry-danger">
+                                <i class="fas fa-ban me-1"></i>
+                                This contract has expired
+                            </div>
+                        }
+                    </div>
+                    <div class="card-footer">
+                        <a asp-action="Details" asp-route-id="@contract.Id" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-eye me-1"></i>View
+                        </a>
+                        @if (contract.Status == "Active")
+                        {
+                            <a asp-controller="ServiceRequests" asp-action="Create" asp-route-contractId="@contract.Id" class="btn btn-primary btn-sm">
+                                <i class="fas fa-plus me-1"></i>Raise Request
+                            </a>
+                        }
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <a asp-action="Edit" asp-route-id="@contract.Id" class="btn btn-outline-warning btn-sm">
+                                <i class="fas fa-edit me-1"></i>Edit
+                            </a>
+                        }
+                        @if (!string.IsNullOrEmpty(contract.SignedAgreementPath))
+                        {
+                            <a asp-action="DownloadAgreement" asp-route-id="@contract.Id" class="btn btn-outline-success btn-sm">
+                                <i class="fas fa-download me-1"></i>PDF
+                            </a>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="fas fa-file-contract"></i>
+            </div>
+            <h5>No contracts found</h5>
+            <p class="text-muted">No contracts match the selected filter criteria.</p>
+            <a asp-action="Index" class="btn btn-primary">Clear Filters</a>
+        </div>
+    }
+</div>

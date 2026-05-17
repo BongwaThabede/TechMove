@@ -7,61 +7,48 @@ namespace TechMove.Services
     public class ContractStatusService : IContractStatusService
     {
         private readonly ApplicationDbContext _context;
+        private readonly ILogger<ContractStatusService> _logger;
 
-        public ContractStatusService(ApplicationDbContext context)
+        public ContractStatusService(ApplicationDbContext context, ILogger<ContractStatusService> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         public async Task SyncAllAsync(DateTime utcToday)
         {
             var contracts = await _context.Contracts.ToListAsync();
-            var changed = false;
-
+            bool anyChanges = false;
+            
             foreach (var contract in contracts)
             {
-                changed = SyncSingle(contract, utcToday) || changed;
+                if (SyncSingle(contract, utcToday))
+                    anyChanges = true;
             }
-
-            if (changed)
-            {
+            
+            if (anyChanges)
                 await _context.SaveChangesAsync();
-            }
         }
 
         public bool SyncSingle(Contract contract, DateTime utcToday)
         {
-            var current = contract.Status?.Trim() ?? "Draft";
-            var normalized = ResolveExpectedStatus(contract, utcToday);
-
-            if (current.Equals(normalized, StringComparison.OrdinalIgnoreCase))
+            bool changed = false;
+            
+            // Update status based on dates
+            if (contract.Status == "Active" && contract.EndDate.Date < utcToday.Date)
             {
-                return false;
+                contract.Status = "Expired";
+                changed = true;
+                _logger.LogInformation("Contract {ContractNumber} expired on {Date}", contract.ContractNumber, utcToday);
             }
-
-            contract.Status = normalized;
-            return true;
-        }
-
-        private static string ResolveExpectedStatus(Contract contract, DateTime utcToday)
-        {
-            // OnHold is kept as an explicit manual override.
-            if (contract.Status.Equals("OnHold", StringComparison.OrdinalIgnoreCase))
+            else if (contract.Status == "Draft" && contract.StartDate.Date <= utcToday.Date && contract.EndDate.Date >= utcToday.Date)
             {
-                return "OnHold";
+                contract.Status = "Active";
+                changed = true;
+                _logger.LogInformation("Contract {ContractNumber} activated on {Date}", contract.ContractNumber, utcToday);
             }
-
-            if (utcToday.Date > contract.EndDate.Date)
-            {
-                return "Expired";
-            }
-
-            if (utcToday.Date >= contract.StartDate.Date)
-            {
-                return "Active";
-            }
-
-            return "Draft";
+            
+            return changed;
         }
     }
 }

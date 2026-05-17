@@ -1,11 +1,10 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using QuestPDF.Infrastructure;
 using TechMove.Data;
 using TechMove.Models;
 using TechMove.Services;
+using QuestPDF.Infrastructure;
 
 QuestPDF.Settings.License = LicenseType.Community;
 
@@ -13,8 +12,6 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
-
-// ✅ ADD THIS LINE - Required for Identity UI Razor Pages
 builder.Services.AddRazorPages();
 
 // Add Session
@@ -30,21 +27,30 @@ builder.Services.AddSession(options =>
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Add ASP.NET Core Identity
+// Add ASP.NET Core Identity with UI
 builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
 {
-    // Development-friendly password policy
+    // Password settings
     options.Password.RequireDigit = false;
     options.Password.RequireLowercase = false;
     options.Password.RequireUppercase = false;
     options.Password.RequireNonAlphanumeric = false;
     options.Password.RequiredLength = 6;
+    
+    // Lockout settings
     options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(30);
     options.Lockout.MaxFailedAccessAttempts = 5;
+    
+    // User settings
     options.User.RequireUniqueEmail = true;
+    
+    // SignIn settings
+    options.SignIn.RequireConfirmedAccount = false;
+    options.SignIn.RequireConfirmedEmail = false;
 })
 .AddEntityFrameworkStores<ApplicationDbContext>()
-.AddDefaultTokenProviders();
+.AddDefaultTokenProviders()
+.AddDefaultUI();  // ← THIS IS IMPORTANT - adds Identity UI pages
 
 // Configure cookie options for Identity
 builder.Services.ConfigureApplicationCookie(options =>
@@ -60,6 +66,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 builder.Services.AddHttpClient<ICurrencyService, CurrencyService>();
 builder.Services.AddScoped<IFileValidationService, FileValidationService>();
 builder.Services.AddScoped<IContractStatusService, ContractStatusService>();
+builder.Services.AddScoped<IFileUploadService, FileUploadService>();
 
 var app = builder.Build();
 
@@ -71,11 +78,8 @@ using (var scope = app.Services.CreateScope())
     var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
     var userManager = services.GetRequiredService<UserManager<IdentityUser>>();
     
-    // Apply pending migrations - COMMENTED OUT for dev (use CLI instead)
-    // await context.Database.MigrateAsync();
-
     // Create roles
-    string[] roleNames = { "Admin", "LogisticsCoordinator", "FinanceOfficer", "ContractManager", "Client" };
+    string[] roleNames = { "Admin", "LogisticsManager", "Finance", "ContractManager", "Client" };
     foreach (var roleName in roleNames)
     {
         if (!await roleManager.RoleExistsAsync(roleName))
@@ -85,7 +89,7 @@ using (var scope = app.Services.CreateScope())
     }
 
     // Helper to create user with role
-    async Task CreateUserWithRole(string email, string password, string role)
+    async Task CreateUserWithRole(string email, string password, string role, string? clientId = null)
     {
         var user = await userManager.FindByEmailAsync(email);
         if (user == null)
@@ -100,10 +104,10 @@ using (var scope = app.Services.CreateScope())
             if (result.Succeeded)
             {
                 await userManager.AddToRoleAsync(user, role);
-                // Add ClientId claim for client users
-                if (role == "Client" && email == "client@techmove.com")
+                
+                if (clientId != null)
                 {
-                    await userManager.AddClaimAsync(user, new Claim("ClientId", "1"));
+                    await userManager.AddClaimAsync(user, new Claim("ClientId", clientId));
                 }
             }
         }
@@ -115,9 +119,9 @@ using (var scope = app.Services.CreateScope())
 
     // Create demo accounts
     await CreateUserWithRole("admin@techmove.com", "Password123!", "Admin");
-    await CreateUserWithRole("manager@techmove.com", "Password123!", "LogisticsCoordinator");
-    await CreateUserWithRole("client@techmove.com", "Password123!", "Client");
-    await CreateUserWithRole("finance@techmove.com", "Password123!", "FinanceOfficer");
+    await CreateUserWithRole("manager@techmove.com", "Password123!", "LogisticsManager");
+    await CreateUserWithRole("finance@techmove.com", "Password123!", "Finance");
+    await CreateUserWithRole("client@techmove.com", "Password123!", "Client", "1");
     await CreateUserWithRole("contracts@techmove.com", "Password123!", "ContractManager");
 
     // Seed Clients/Contracts if empty
@@ -133,7 +137,7 @@ using (var scope = app.Services.CreateScope())
         await context.Clients.AddAsync(client);
         await context.SaveChangesAsync();
 
-        await context.Contracts.AddAsync(new Contract
+        var contract = new Contract
         {
             ClientId = client.Id,
             ContractNumber = "ACME-001",
@@ -143,9 +147,9 @@ using (var scope = app.Services.CreateScope())
             ServiceLevel = "Gold",
             ContractValueUSD = 10000.00m,
             ContractValueZAR = 185200.00m,
-            CreatedDate = DateTime.UtcNow,
-            LastModifiedDate = null
-        });
+            CreatedDate = DateTime.UtcNow
+        };
+        await context.Contracts.AddAsync(contract);
         await context.SaveChangesAsync();
     }
 }
@@ -168,7 +172,6 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
-// Enable Identity UI pages (login, register, etc.)
-app.MapRazorPages();
+app.MapRazorPages();  // Required for Identity UI pages
 
 app.Run();

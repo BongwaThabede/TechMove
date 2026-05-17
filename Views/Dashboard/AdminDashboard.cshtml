@@ -1,0 +1,291 @@
+@{
+    ViewData["Title"] = "Admin Dashboard";
+    Layout = "_LayoutDashboard";
+}
+
+<div class="container-fluid">
+    <h1 class="mb-4">Admin Dashboard</h1>
+    
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-2">
+            <div class="card text-white bg-primary">
+                <div class="card-body text-center">
+                    <h3>@ViewBag.TotalClients</h3>
+                    <p>Clients</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-white bg-success">
+                <div class="card-body text-center">
+                    <h3>@ViewBag.ActiveContracts</h3>
+                    <p>Active Contracts</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-white bg-danger">
+                <div class="card-body text-center">
+                    <h3>@ViewBag.ExpiredContracts</h3>
+                    <p>Expired Contracts</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-white bg-info">
+                <div class="card-body text-center">
+                    <h3>@ViewBag.TotalRequests</h3>
+                    <p>Service Requests</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-white bg-warning">
+                <div class="card-body text-center">
+                    <h3>@ViewBag.PendingRequests</h3>
+                    <p>Pending</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-white bg-secondary">
+                <div class="card-body text-center">
+                    <h3>R @ViewBag.TotalContractValueZAR.ToString("N0")</h3>
+                    <p>Total Value</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-bolt me-2"></i>Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <a asp-controller="Clients" asp-action="Create" class="btn btn-primary me-2">
+                        <i class="fas fa-user-plus me-2"></i>Add Client
+                    </a>
+                    <a asp-controller="Contracts" asp-action="Create" class="btn btn-success me-2">
+                        <i class="fas fa-file-contract me-2"></i>Add Contract
+                    </a>
+                    <a asp-controller="Home" asp-action="ExportReport" class="btn btn-info me-2">
+                        <i class="fas fa-file-pdf me-2"></i>Export Report
+                    </a>
+                    <a asp-controller="Clients" asp-action="Index" class="btn btn-outline-primary me-2">
+                        <i class="fas fa-users me-2"></i>Manage Clients
+                    </a>
+                    <a asp-controller="Contracts" asp-action="Index" class="btn btn-outline-success me-2">
+                        <i class="fas fa-list me-2"></i>All Contracts
+                    </a>
+                    <a asp-controller="ServiceRequests" asp-action="Index" class="btn btn-outline-info me-2">
+                        <i class="fas fa-truck me-2"></i>All Requests
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search/Filter by Date Range & Status -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-search me-2"></i>Search Contracts by Date Range & Status</h5>
+                </div>
+                <div class="card-body">
+                    <form asp-controller="Contracts" asp-action="Search" method="get" class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">Start Date From</label>
+                            <input type="date" name="startDate" class="form-control" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">End Date To</label>
+                            <input type="date" name="endDate" class="form-control" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">Status</label>
+                            <select name="status" class="form-select">
+                                <option value="All">All</option>
+                                <option value="Draft">Draft</option>
+                                <option value="Active">Active</option>
+                                <option value="Expired">Expired</option>
+                                <option value="On Hold">On Hold</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">&nbsp;</label>
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-search me-2"></i>Search Contracts
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Clients List -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-users me-2"></i>Client Management</h5>
+                </div>
+                <div class="card-body">
+                    @if (((List<TechMove.Models.Client>)ViewBag.Clients).Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Contact Details</th>
+                                        <th>Region</th>
+                                        <th>Contracts</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var client in ViewBag.Clients)
+                                    {
+                                        <tr>
+                                            <td>@client.Name</td>
+                                            <td>@client.ContactDetails</td>
+                                            <td>@client.Region</td>
+                                            <td>
+                                                <span class="badge bg-info">@client.Contracts.Count</span>
+                                            </td>
+                                            <td>
+                                                <a asp-controller="Clients" asp-action="Details" asp-route-id="@client.Id" class="btn btn-sm btn-info" title="View Details">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <a asp-controller="Clients" asp-action="Edit" asp-route-id="@client.Id" class="btn btn-sm btn-warning" title="Edit">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <a asp-controller="Clients" asp-action="Delete" asp-route-id="@client.Id" class="btn btn-sm btn-danger" title="Delete">
+                                                    <i class="fas fa-trash"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-info text-center">
+                            <i class="fas fa-info-circle me-2"></i>No clients found. Click "Add Client" to create one.
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Contracts & Requests -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-file-contract me-2"></i>Recent Contracts</h5>
+                </div>
+                <div class="card-body">
+                    @if (((List<TechMove.Models.Contract>)ViewBag.RecentContracts).Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead>
+                                    <tr><th>Contract #</th><th>Client</th><th>Status</th><th>End Date</th></tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var contract in ViewBag.RecentContracts)
+                                    {
+                                        <tr>
+                                            <td>@contract.ContractNumber</td>
+                                            <td>@contract.Client?.Name</td>
+                                            <td>
+                                                @if (contract.Status == "Active")
+                                                {
+                                                    <span class="badge bg-success">@contract.Status</span>
+                                                }
+                                                else if (contract.Status == "Draft")
+                                                {
+                                                    <span class="badge bg-secondary">@contract.Status</span>
+                                                }
+                                                else if (contract.Status == "Expired")
+                                                {
+                                                    <span class="badge bg-danger">@contract.Status</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-warning">@contract.Status</span>
+                                                }
+                                            </td>
+                                            <td>@contract.EndDate.ToShortDateString()</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-3 text-muted">No contracts found.</div>
+                    }
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-truck me-2"></i>Recent Service Requests</h5>
+                </div>
+                <div class="card-body">
+                    @if (((List<TechMove.Models.ServiceRequest>)ViewBag.RecentRequests).Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead>
+                                    <tr><th>Request #</th><th>Description</th><th>Cost (ZAR)</th><th>Status</th></tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var request in ViewBag.RecentRequests)
+                                    {
+                                        <tr>
+                                            <td>@request.RequestNumber</td>
+                                            <td>@request.Description?.Length > 50 ? request.Description.Substring(0, 50) + "..." : request.Description</td>
+                                            <td>R @request.CostInZAR.ToString("N2")</td>
+                                            <td>
+                                                @if (request.Status == "Pending")
+                                                {
+                                                    <span class="badge bg-warning">@request.Status</span>
+                                                }
+                                                else if (request.Status == "Completed")
+                                                {
+                                                    <span class="badge bg-success">@request.Status</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-primary">@request.Status</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-3 text-muted">No service requests found.</div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
