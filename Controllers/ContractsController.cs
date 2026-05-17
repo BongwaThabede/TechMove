@@ -1,15 +1,14 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using TechMove.Data;
 using TechMove.Models;
 using TechMove.Services;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
-using TechMove.Security;
 
 namespace TechMove.Controllers
 {
+    [Authorize]
     public class ContractsController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -36,22 +35,30 @@ namespace TechMove.Controllers
         }
 
         // GET: Contracts
-        public async Task<IActionResult> Index()
-        {
-            if (!HttpContext.IsLoggedIn()) return RedirectToAction("Login", "Account");
+       // GET: Contracts with optional status filter
+public async Task<IActionResult> Index(string? status)
+{
+    await _contractStatusService.SyncAllAsync(DateTime.UtcNow.Date);
 
-            await _contractStatusService.SyncAllAsync(DateTime.UtcNow.Date);
+    var query = _context.Contracts
+        .Include(c => c.Client)
+        .AsQueryable();
 
-            var contracts = await _context.Contracts
-                .Include(c => c.Client)
-                .ToListAsync();
-            return View(contracts);
-        }
+    // Filter by status if provided
+    if (!string.IsNullOrEmpty(status) && status != "All")
+    {
+        query = query.Where(c => c.Status == status);
+    }
 
+    var contracts = await query
+        .OrderByDescending(c => c.CreatedDate)
+        .ToListAsync();
+    
+    return View(contracts);
+}
         // GET: Contracts/Details/5
         public async Task<IActionResult> Details(int? id)
         {
-            if (!HttpContext.IsLoggedIn()) return RedirectToAction("Login", "Account");
             if (id == null) return NotFound();
 
             var contract = await _context.Contracts
@@ -69,11 +76,9 @@ namespace TechMove.Controllers
         }
 
         // GET: Contracts/Create
+        [Authorize(Roles = "Admin,LogisticsManager")]
         public IActionResult Create()
         {
-            if (!HttpContext.IsLoggedIn()) return RedirectToAction("Login", "Account");
-            if (!HttpContext.HasAnyRole("GeneralUser", "Admin")) return Forbid();
-
             ViewData["ClientId"] = new SelectList(_context.Clients, "Id", "Name");
             return View();
         }
@@ -81,14 +86,11 @@ namespace TechMove.Controllers
         // POST: Contracts/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,ClientId,StartDate,EndDate,Status,ServiceLevel")] Contract contract, IFormFile signedAgreement)
+        [Authorize(Roles = "Admin,LogisticsManager")]
+        public async Task<IActionResult> Create([Bind("ClientId,StartDate,EndDate,Status,ServiceLevel,ContractNumber,ContractValueUSD")] Contract contract, IFormFile? signedAgreement)
         {
-            if (!HttpContext.IsLoggedIn()) return RedirectToAction("Login", "Account");
-            if (!HttpContext.HasAnyRole("GeneralUser", "Admin")) return Forbid();
-
             if (signedAgreement != null && signedAgreement.Length > 0)
             {
-                // Validate PDF
                 if (!_fileValidationService.IsValidPdf(signedAgreement))
                 {
                     ModelState.AddModelError("SignedAgreement", "Only PDF files are allowed.");
@@ -96,8 +98,7 @@ namespace TechMove.Controllers
                     return View(contract);
                 }
 
-                // Save file
-                var uploadsFolder = Path.Combine(_environment.WebRootPath, "uploads", "contracts");
+                var uploadsFolder = Path.Combine(_environment.WebRootPath ?? _environment.ContentRootPath, "uploads", "contracts");
                 Directory.CreateDirectory(uploadsFolder);
                 
                 var uniqueFileName = $"{Guid.NewGuid()}{Path.GetExtension(signedAgreement.FileName)}";
@@ -110,12 +111,19 @@ namespace TechMove.Controllers
 
                 contract.SignedAgreementPath = $"/uploads/contracts/{uniqueFileName}";
                 contract.SignedAgreementFileName = signedAgreement.FileName;
+                contract.AgreementUploadDate = DateTime.UtcNow;
             }
+
+            // Get exchange rate for USD to ZAR conversion
+            var rate = await _currencyService.GetUSDToZARRateAsync();
+            contract.ContractValueZAR = contract.ContractValueUSD * rate;
+            contract.CreatedDate = DateTime.UtcNow;
 
             if (ModelState.IsValid)
             {
                 _context.Add(contract);
                 await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "Contract created successfully!";
                 return RedirectToAction(nameof(Index));
             }
             
@@ -123,12 +131,54 @@ namespace TechMove.Controllers
             return View(contract);
         }
 
+        // GET: Contracts/Edit/5
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Edit(int? id)
+        {
+            if (id == null) return NotFound();
+
+            var contract = await _context.Contracts.FindAsync(id);
+            if (contract == null) return NotFound();
+            
+            ViewData["ClientId"] = new SelectList(_context.Clients, "Id", "Name", contract.ClientId);
+            return View(contract);
+        }
+
+        // POST: Contracts/Edit/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Edit(int id, [Bind("Id,ClientId,StartDate,EndDate,Status,ServiceLevel,ContractNumber,ContractValueUSD,SignedAgreementPath,SignedAgreementFileName")] Contract contract)
+        {
+            if (id != contract.Id) return NotFound();
+
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    var rate = await _currencyService.GetUSDToZARRateAsync();
+                    contract.ContractValueZAR = contract.ContractValueUSD * rate;
+                    contract.LastModifiedDate = DateTime.UtcNow;
+                    
+                    _context.Update(contract);
+                    await _context.SaveChangesAsync();
+                    TempData["SuccessMessage"] = "Contract updated successfully!";
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!ContractExists(contract.Id)) return NotFound();
+                    throw;
+                }
+                return RedirectToAction(nameof(Index));
+            }
+            ViewData["ClientId"] = new SelectList(_context.Clients, "Id", "Name", contract.ClientId);
+            return View(contract);
+        }
+
         // GET: Contracts/Search
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Search(DateTime? startDate, DateTime? endDate, string status)
         {
-            if (!HttpContext.IsLoggedIn()) return RedirectToAction("Login", "Account");
-            if (!HttpContext.HasAnyRole("Admin")) return Forbid();
-
             await _contractStatusService.SyncAllAsync(DateTime.UtcNow.Date);
 
             var query = _context.Contracts.Include(c => c.Client).AsQueryable();
@@ -143,13 +193,15 @@ namespace TechMove.Controllers
                 query = query.Where(c => c.EndDate <= endDate.Value);
             }
 
-            if (!string.IsNullOrEmpty(status))
+            if (!string.IsNullOrEmpty(status) && status != "All")
             {
                 query = query.Where(c => c.Status == status);
             }
 
             var contracts = await query.ToListAsync();
-            ViewData["StatusFilter"] = new SelectList(new[] { "All", "Draft", "Active", "Expired", "OnHold" }, status);
+            ViewData["StatusFilter"] = new SelectList(new[] { "All", "Draft", "Active", "Expired", "On Hold" }, status ?? "All");
+            ViewData["StartDate"] = startDate?.ToString("yyyy-MM-dd");
+            ViewData["EndDate"] = endDate?.ToString("yyyy-MM-dd");
             
             return View("Index", contracts);
         }
@@ -157,19 +209,40 @@ namespace TechMove.Controllers
         // GET: Contracts/DownloadAgreement/5
         public async Task<IActionResult> DownloadAgreement(int id)
         {
-            if (!HttpContext.IsLoggedIn()) return RedirectToAction("Login", "Account");
-
             var contract = await _context.Contracts.FindAsync(id);
             if (contract == null || string.IsNullOrEmpty(contract.SignedAgreementPath))
                 return NotFound();
 
-            var filePath = Path.Combine(_environment.WebRootPath, contract.SignedAgreementPath.TrimStart('/'));
+            var webRootPath = _environment.WebRootPath ?? _environment.ContentRootPath;
+            var filePath = Path.Combine(webRootPath, contract.SignedAgreementPath.TrimStart('/'));
             
             if (!System.IO.File.Exists(filePath))
                 return NotFound();
 
             var fileBytes = await System.IO.File.ReadAllBytesAsync(filePath);
-            return File(fileBytes, "application/pdf", contract.SignedAgreementFileName);
+            var fileName = contract.SignedAgreementFileName ?? $"contract_{contract.ContractNumber}.pdf";
+            return File(fileBytes, "application/pdf", fileName);
+        }
+
+        // POST: Contracts/Delete/5
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> DeleteConfirmed(int id)
+        {
+            var contract = await _context.Contracts.FindAsync(id);
+            if (contract != null)
+            {
+                _context.Contracts.Remove(contract);
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "Contract deleted successfully!";
+            }
+            return RedirectToAction(nameof(Index));
+        }
+
+        private bool ContractExists(int id)
+        {
+            return _context.Contracts.Any(e => e.Id == id);
         }
     }
 }

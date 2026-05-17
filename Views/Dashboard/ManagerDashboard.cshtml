@@ -1,0 +1,125 @@
+@{
+    ViewData["Title"] = "Logistics Manager Dashboard";
+    Layout = "_LayoutDashboard";
+}
+
+<div class="container-fluid">
+    <h1 class="mb-4">Logistics Manager Dashboard</h1>
+    
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card text-white bg-success">
+                <div class="card-body text-center">
+                    <h3>@ViewBag.TotalRequests</h3>
+                    <p>My Service Requests</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-white bg-warning">
+                <div class="card-body text-center">
+                    <h3>@ViewBag.PendingRequests</h3>
+                    <p>Pending Approval</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-white bg-info">
+                <div class="card-body text-center">
+                    <h3>R @ViewBag.CurrencyRate.ToString("N2")</h3>
+                    <p>USD to ZAR Rate</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Contracts (Eligible for Service Requests) -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5><i class="fas fa-check-circle me-2"></i>Active Contracts (Eligible for Service Requests)</h5>
+                </div>
+                <div class="card-body">
+                    @if (((List<TechMove.Models.Contract>)ViewBag.ActiveContracts).Any())
+                    {
+                        <div class="row">
+                            @foreach (var contract in ViewBag.ActiveContracts)
+                            {
+                                <div class="col-md-6 mb-3">
+                                    <div class="border rounded p-3">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div>
+                                                <strong>@contract.ContractNumber</strong><br />
+                                                <small>Client: @contract.Client?.Name</small><br />
+                                                <small>Service Level: @contract.ServiceLevel</small><br />
+                                                <small>Expires: @contract.EndDate.ToShortDateString()</small>
+                                                @if (contract.DaysUntilExpiry <= 30 && contract.DaysUntilExpiry > 0)
+                                                {
+                                                    <span class="badge bg-warning ms-2">Expiring in @contract.DaysUntilExpiry days</span>
+                                                }
+                                            </div>
+                                            <a asp-controller="ServiceRequests" asp-action="Create" asp-route-contractId="@contract.Id" class="btn btn-primary">
+                                                <i class="fas fa-plus"></i> Raise Request
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-info">No active contracts available.</div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- My Service Requests -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>My Service Requests</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table">
+                        <thead>
+                            <tr><th>Request #</th><th>Contract</th><th>Description</th><th>Cost (USD)</th><th>Cost (ZAR)</th><th>Status</th><th>Date</th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var request in ViewBag.MyRequests)
+                            {
+                                <tr>
+                                    <td>@request.RequestNumber</td>
+                                    <td>@request.Contract?.ContractNumber</td>
+                                    <td>@request.Description</td>
+                                    <td>$@request.Cost.ToString("N2")</td>
+                                    <td><strong>R @request.CostInZAR.ToString("N2")</strong></td>
+                                    <td>
+                                        @if (request.Status == "Pending")
+                                        {
+                                            <span class="badge bg-warning">@request.Status</span>
+                                        }
+                                        else if (request.Status == "Completed")
+                                        {
+                                            <span class="badge bg-success">@request.Status</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">@request.Status</span>
+                                        }
+                                    </td>
+                                    <td>@request.RequestDate.ToShortDateString()</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

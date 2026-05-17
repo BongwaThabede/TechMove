@@ -1,0 +1,65 @@
+@model TechMove.Models.Client
+@{
+    ViewData["Title"] = "Client Details";
+    Layout = "_LayoutDashboard";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card shadow">
+                <div class="card-header bg-info text-white">
+                    <h4><i class="fas fa-building me-2"></i>Client Details</h4>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-3">Name</dt>
+                        <dd class="col-sm-9">@Model.Name</dd>
+
+                        <dt class="col-sm-3">Contact Details</dt>
+                        <dd class="col-sm-9">@Model.ContactDetails</dd>
+
+                        <dt class="col-sm-3">Region</dt>
+                        <dd class="col-sm-9">@Model.Region</dd>
+
+                        <dt class="col-sm-3">Created Date</dt>
+                        <dd class="col-sm-9">@Model.CreatedDate.ToShortDateString()</dd>
+
+                        <dt class="col-sm-3">Total Contracts</dt>
+                        <dd class="col-sm-9">@Model.Contracts.Count</dd>
+                    </dl>
+
+                    @if (Model.Contracts.Any())
+                    {
+                        <h5 class="mt-4">Contracts</h5>
+                        <table class="table table-sm">
+                            <thead>
+                                <tr><th>Contract #</th><th>Service Level</th><th>Status</th><th>End Date</th></tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var contract in Model.Contracts)
+                                {
+                                    <tr>
+                                        <td><a asp-controller="Contracts" asp-action="Details" asp-route-id="@contract.Id">@contract.ContractNumber</a></td>
+                                        <td>@contract.ServiceLevel</td>
+                                        <td>@contract.Status</td>
+                                        <td>@contract.EndDate.ToShortDateString()</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+
+                    <div class="mt-4">
+                        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">
+                            <i class="fas fa-edit me-2"></i>Edit
+                        </a>
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Back to List
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,54 +1,113 @@
 @model TechMove.Models.Contract
 @{
     ViewData["Title"] = "Create Contract";
+    Layout = "_LayoutDashboard";
 }
 
-<h1>Create Contract</h1>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4><i class="fas fa-file-contract me-2"></i>Create New Contract</h4>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Create" method="post" enctype="multipart/form-data">
+                        @Html.AntiForgeryToken()
+                        
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
 
-<form asp-action="Create" method="post" enctype="multipart/form-data">
-    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="ClientId" class="form-label fw-bold"></label>
+                                <select asp-for="ClientId" class="form-select" asp-items="ViewBag.ClientId">
+                                    <option value="">-- Select Client --</option>
+                                </select>
+                                <span asp-validation-for="ClientId" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="ContractNumber" class="form-label fw-bold"></label>
+                                <input asp-for="ContractNumber" class="form-control" placeholder="e.g., CT-2024-001" />
+                                <span asp-validation-for="ContractNumber" class="text-danger"></span>
+                            </div>
+                        </div>
 
-    <div class="mb-3">
-        <label asp-for="ClientId" class="form-label"></label>
-        <select asp-for="ClientId" class="form-select" asp-items="ViewBag.ClientId"></select>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="StartDate" class="form-label fw-bold"></label>
+                                <input asp-for="StartDate" type="date" class="form-control" />
+                                <span asp-validation-for="StartDate" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="EndDate" class="form-label fw-bold"></label>
+                                <input asp-for="EndDate" type="date" class="form-control" />
+                                <span asp-validation-for="EndDate" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Status" class="form-label fw-bold"></label>
+                                <select asp-for="Status" class="form-select">
+                                    <option value="Draft">Draft</option>
+                                    <option value="Active">Active</option>
+                                    <option value="OnHold">On Hold</option>
+                                    <option value="Expired">Expired</option>
+                                </select>
+                                <span asp-validation-for="Status" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="ServiceLevel" class="form-label fw-bold"></label>
+                                <select asp-for="ServiceLevel" class="form-select">
+                                    <option value="Standard">Standard</option>
+                                    <option value="Gold">Gold</option>
+                                    <option value="Platinum">Platinum</option>
+                                </select>
+                                <span asp-validation-for="ServiceLevel" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="ContractValueUSD" class="form-label fw-bold"></label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input asp-for="ContractValueUSD" class="form-control" type="number" step="0.01" />
+                                </div>
+                                <span asp-validation-for="ContractValueUSD" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Contract Value (ZAR)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">R</span>
+                                    <input class="form-control" id="zarValue" readonly style="background-color: #e9ecef;" />
+                                </div>
+                                <small class="text-muted">Auto-calculated using current exchange rate</small>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="signedAgreement" class="form-label fw-bold">Signed Agreement (PDF only)</label>
+                            <input type="file" class="form-control" name="signedAgreement" accept=".pdf" />
+                            <small class="text-muted">Only PDF files are allowed (max 10MB)</small>
+                            <span asp-validation-for="SignedAgreementPath" class="text-danger"></span>
+                        </div>
+
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Create Contract
+                            </button>
+                            <a asp-action="Index" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Back to List
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
-
-    <div class="mb-3">
-        <label asp-for="StartDate" class="form-label"></label>
-        <input asp-for="StartDate" class="form-control" type="date" />
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="EndDate" class="form-label"></label>
-        <input asp-for="EndDate" class="form-control" type="date" />
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="Status" class="form-label"></label>
-        <select asp-for="Status" class="form-select">
-            <option>Draft</option>
-            <option>Active</option>
-            <option>Expired</option>
-            <option>OnHold</option>
-        </select>
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="ServiceLevel" class="form-label"></label>
-        <input asp-for="ServiceLevel" class="form-control" />
-    </div>
-
-    <div class="mb-3">
-        <label class="form-label">Signed Agreement (PDF only)</label>
-        <input type="file" class="form-control" name="signedAgreement" accept=".pdf" />
-    </div>
-
-    <button type="submit" class="btn btn-primary">Save</button>
-    <a asp-action="Index" class="btn btn-secondary">Back</a>
-</form>
+</div>
 
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
 }

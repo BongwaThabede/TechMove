@@ -1,0 +1,136 @@
+@{
+    ViewData["Title"] = "My Dashboard";
+    Layout = "_LayoutDashboard";
+}
+
+<div class="container-fluid">
+    <h1 class="mb-4">Welcome, @ViewBag.Client?.Name</h1>
+    
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card text-white bg-primary">
+                <div class="card-body text-center">
+                    <h3>@ViewBag.TotalContracts</h3>
+                    <p>My Contracts</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-white bg-success">
+                <div class="card-body text-center">
+                    <h3>@ViewBag.ActiveContracts</h3>
+                    <p>Active Contracts</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-white bg-info">
+                <div class="card-body text-center">
+                    <h3>@ViewBag.TotalRequests</h3>
+                    <p>Service Requests</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- My Contracts -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>My Contracts</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table">
+                        <thead>
+                            <tr><th>Contract #</th><th>Service Level</th><th>Start Date</th><th>End Date</th><th>Status</th><th>Signed Agreement</th><th>Requests</th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var contract in ViewBag.MyContracts)
+                            {
+                                <tr>
+                                    <td>@contract.ContractNumber</td>
+                                    <td>@contract.ServiceLevel</td>
+                                    <td>@contract.StartDate.ToShortDateString()</td>
+                                    <td>@contract.EndDate.ToShortDateString()</td>
+                                    <td>
+                                        @if (contract.Status == "Active")
+                                        {
+                                            <span class="badge bg-success">@contract.Status</span>
+                                        }
+                                        else if (contract.Status == "Expired")
+                                        {
+                                            <span class="badge bg-danger">@contract.Status</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">@contract.Status</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(contract.SignedAgreementPath))
+                                        {
+                                            <a asp-controller="Dashboard" asp-action="DownloadContractPdf" asp-route-contractId="@contract.Id" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-download"></i> Download PDF
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">Not uploaded</span>
+                                        }
+                                    </td>
+                                    <td>@contract.ServiceRequests.Count</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- My Service Requests -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>My Service Requests</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table">
+                        <thead>
+                            <tr><th>Request #</th><th>Contract</th><th>Description</th><th>Cost (ZAR)</th><th>Status</th><th>Date</th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var request in ViewBag.MyRequests)
+                            {
+                                <tr>
+                                    <td>@request.RequestNumber</td>
+                                    <td>@request.Contract?.ContractNumber</td>
+                                    <td>@request.Description</td>
+                                    <td>R @request.CostInZAR.ToString("N2")</td>
+                                    <td>
+                                        @if (request.Status == "Pending")
+                                        {
+                                            <span class="badge bg-warning">@request.Status</span>
+                                        }
+                                        else if (request.Status == "Completed")
+                                        {
+                                            <span class="badge bg-success">@request.Status</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">@request.Status</span>
+                                        }
+                                    </td>
+                                    <td>@request.RequestDate.ToShortDateString()</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

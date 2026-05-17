@@ -1,107 +1,82 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace TechMove.Models
 {
-    public class RegisterViewModel : IValidatableObject
+    public class RegisterViewModel
     {
-        public static readonly string[] CompanyTypeOptions =
-        {
-            "Shipper",
-            "Consignee",
-            "Freight Forwarder",
-            "Carrier/Shipping Line",
-            "3PL Provider",
-            "Customs Broker",
-            "Warehousing/Distribution",
-            "Manufacturer/Retailer",
-            "Other"
-        };
-
-        private static readonly HashSet<string> AllowedAccountTypes = new(StringComparer.Ordinal)
-        {
-            "LogisticsManager",
-            "GeneralUser",
-            "Viewer"
-        };
-
-        [Required(ErrorMessage = "First name is required.")]
-        [StringLength(100)]
-        [Display(Name = "First name")]
+        // Personal Information
+        [Required(ErrorMessage = "First name is required")]
+        [Display(Name = "First Name")]
+        [StringLength(50, MinimumLength = 2, ErrorMessage = "First name must be between 2 and 50 characters")]
         public string FirstName { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Last name is required.")]
-        [StringLength(100)]
-        [Display(Name = "Last name")]
+        [Required(ErrorMessage = "Last name is required")]
+        [Display(Name = "Last Name")]
+        [StringLength(50, MinimumLength = 2, ErrorMessage = "Last name must be between 2 and 50 characters")]
         public string LastName { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Email is required.")]
-        [EmailAddress(ErrorMessage = "Enter a valid email address.")]
-        [Display(Name = "Email")]
+        [Required(ErrorMessage = "Email is required")]
+        [EmailAddress(ErrorMessage = "Invalid email address")]
+        [Display(Name = "Email Address")]
         public string Email { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Phone is required.")]
-        [StringLength(30, MinimumLength = 7, ErrorMessage = "Enter a valid phone number.")]
-        [Display(Name = "Phone")]
-        [DataType(DataType.PhoneNumber)]
+        [Display(Name = "Phone Number")]
+        [Phone(ErrorMessage = "Invalid phone number")]
+        [StringLength(20)]
         public string Phone { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Password is required.")]
-        [StringLength(100, MinimumLength = 6, ErrorMessage = "Password must be at least {2} characters.")]
+        [Required(ErrorMessage = "Password is required")]
         [DataType(DataType.Password)]
+        [StringLength(100, MinimumLength = 6, ErrorMessage = "Password must be at least 6 characters")]
         [Display(Name = "Password")]
         public string Password { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Please confirm your password.")]
+        [Required(ErrorMessage = "Please confirm your password")]
         [DataType(DataType.Password)]
-        [Compare(nameof(Password), ErrorMessage = "Passwords do not match.")]
-        [Display(Name = "Confirm password")]
+        [Compare("Password", ErrorMessage = "Passwords do not match")]
+        [Display(Name = "Confirm Password")]
         public string ConfirmPassword { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Company name is required.")]
-        [StringLength(200)]
-        [Display(Name = "Company name")]
+        // Company Information
+        [Required(ErrorMessage = "Company name is required")]
+        [Display(Name = "Company Name")]
+        [StringLength(100)]
         public string CompanyName { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Company type is required.")]
-        [Display(Name = "Company type")]
+        [Required(ErrorMessage = "Company type is required")]
+        [Display(Name = "Company Type")]
         public string CompanyType { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Please select an account type.")]
-        [Display(Name = "Account type")]
+        // Account Type - Optional
+        [Display(Name = "Account Type")]
         public string AccountType { get; set; } = string.Empty;
 
+        // Agreements - Changed from Range to just a boolean property
         [Display(Name = "I agree to Terms & Conditions")]
         public bool AgreeTerms { get; set; }
 
         [Display(Name = "I agree to Privacy Policy")]
         public bool AgreePrivacy { get; set; }
 
-        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        // Dropdown Options
+        public static readonly List<string> CompanyTypeOptions = new()
         {
-            if (!AgreeTerms)
-            {
-                yield return new ValidationResult(
-                    "You must agree to the Terms & Conditions.",
-                    new[] { nameof(AgreeTerms) });
-            }
+            "Logistics & Supply Chain",
+            "Freight Forwarding",
+            "Warehousing",
+            "Manufacturing",
+            "Retail",
+            "Technology",
+            "Other"
+        };
 
-            if (!AgreePrivacy)
-            {
-                yield return new ValidationResult(
-                    "You must agree to the Privacy Policy.",
-                    new[] { nameof(AgreePrivacy) });
-            }
-
-            if (!string.IsNullOrWhiteSpace(AccountType) && !AllowedAccountTypes.Contains(AccountType))
-            {
-                yield return new ValidationResult("Invalid account type.", new[] { nameof(AccountType) });
-            }
-
-            if (!string.IsNullOrWhiteSpace(CompanyType) &&
-                !CompanyTypeOptions.Contains(CompanyType))
-            {
-                yield return new ValidationResult("Please select a valid company type.", new[] { nameof(CompanyType) });
-            }
-        }
+        public static readonly List<SelectListItem> AccountTypeOptions = new()
+        {
+            new SelectListItem { Value = "Admin", Text = "Administrator" },
+            new SelectListItem { Value = "LogisticsManager", Text = "Logistics Manager" },
+            new SelectListItem { Value = "Finance", Text = "Finance Officer" },
+            new SelectListItem { Value = "ContractManager", Text = "Contract Manager" }
+        };
     }
 }

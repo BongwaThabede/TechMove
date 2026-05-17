@@ -1,69 +1,118 @@
 @model TechMove.Models.ServiceRequest
 @{
     ViewData["Title"] = "Create Service Request";
+    Layout = "_LayoutDashboard";
     var rate = ViewBag.CurrentRate as decimal? ?? 0m;
+    var contractId = ViewBag.ContractId as int?;
 }
 
-<h1>Create Service Request</h1>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4><i class="fas fa-plus-circle me-2"></i>Create Service Request</h4>
+                </div>
+                <div class="card-body">
+                    @if (TempData["ErrorMessage"] != null)
+                    {
+                        <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+                    }
 
-<div class="alert alert-info">
-    Current USD to ZAR rate: <strong>@rate</strong>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Current USD to ZAR exchange rate: <strong>R @rate.ToString("N2")</strong>
+                    </div>
+
+                    <form asp-action="Create" method="post">
+                        @Html.AntiForgeryToken()
+                        
+                        <input type="hidden" asp-for="ContractId" value="@contractId" />
+
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                        <div class="mb-3">
+                            <label asp-for="Description" class="form-label fw-bold"></label>
+                            <textarea asp-for="Description" class="form-control" rows="4" placeholder="Describe the service request..."></textarea>
+                            <span asp-validation-for="Description" class="text-danger"></span>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Cost" class="form-label fw-bold">Cost (USD)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input asp-for="Cost" class="form-control" id="usdAmount" type="number" step="0.01" />
+                                </div>
+                                <span asp-validation-for="Cost" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Estimated Cost (ZAR)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">R</span>
+                                    <input class="form-control" id="zarAmount" readonly style="background-color: #e9ecef;" />
+                                </div>
+                                <small class="text-muted">Auto-calculated using current exchange rate</small>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Priority" class="form-label fw-bold"></label>
+                                <select asp-for="Priority" class="form-select">
+                                    <option value="Low">Low</option>
+                                    <option value="Normal" selected>Normal</option>
+                                    <option value="High">High</option>
+                                    <option value="Urgent">Urgent</option>
+                                </select>
+                                <span asp-validation-for="Priority" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Status" class="form-label fw-bold"></label>
+                                <select asp-for="Status" class="form-select">
+                                    <option value="Pending" selected>Pending</option>
+                                    <option value="InProgress">In Progress</option>
+                                    <option value="Completed">Completed</option>
+                                </select>
+                                <span asp-validation-for="Status" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Create Request
+                            </button>
+                            <a asp-controller="Dashboard" asp-action="ManagerDashboard" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
-<form asp-action="Create" method="post">
-    <input type="hidden" asp-for="ContractId" value="@ViewBag.ContractId" />
-
-    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-
-    <div class="mb-3">
-        <label asp-for="Description" class="form-label"></label>
-        <input asp-for="Description" class="form-control" />
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="Cost" class="form-label">Cost (USD)</label>
-        <input asp-for="Cost" class="form-control" id="usdAmount" />
-    </div>
-
-    <div class="mb-3">
-        <label class="form-label">Estimated Cost (ZAR)</label>
-        <input class="form-control" id="zarAmount" readonly />
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="Status" class="form-label"></label>
-        <select asp-for="Status" class="form-select">
-            <option>Pending</option>
-            <option>InProgress</option>
-            <option>Completed</option>
-        </select>
-    </div>
-
-    <button type="submit" class="btn btn-primary">Create</button>
-    <a asp-controller="Contracts" asp-action="Index" class="btn btn-secondary">Back</a>
-</form>
-
 @section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    
     <script>
-        (function () {
-            const rate = @rate.ToString(System.Globalization.CultureInfo.InvariantCulture);
-            const usdInput = document.getElementById("usdAmount");
-            const zarInput = document.getElementById("zarAmount");
+        var rate = @rate.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        var usdInput = document.getElementById("usdAmount");
+        var zarInput = document.getElementById("zarAmount");
 
-            function updateEstimate() {
-                const usd = parseFloat(usdInput.value || "0");
-                if (!isNaN(usd)) {
-                    zarInput.value = (usd * rate).toFixed(2);
-                } else {
-                    zarInput.value = "";
-                }
+        function updateEstimate() {
+            var usd = parseFloat(usdInput.value || "0");
+            if (!isNaN(usd)) {
+                zarInput.value = (usd * rate).toFixed(2);
+            } else {
+                zarInput.value = "";
             }
+        }
 
+        if (usdInput) {
             usdInput.addEventListener("input", updateEstimate);
             updateEstimate();
-        })();
+        }
     </script>
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
 }

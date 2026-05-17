@@ -1,0 +1,104 @@
+@{
+    ViewData["Title"] = "Finance Dashboard";
+    Layout = "_LayoutDashboard";
+}
+
+<div class="container-fluid">
+    <h1 class="mb-4">Finance Dashboard</h1>
+    
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-white bg-info">
+                <div class="card-body text-center">
+                    <h3>@ViewBag.TotalRequests</h3>
+                    <p>Total Requests</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-success">
+                <div class="card-body text-center">
+                    <h3>R @ViewBag.TotalCostZAR.ToString("N0")</h3>
+                    <p>Total Cost (ZAR)</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-warning">
+                <div class="card-body text-center">
+                    <h3>@ViewBag.PendingRequests</h3>
+                    <p>Pending</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-secondary">
+                <div class="card-body text-center">
+                    <h3>R @ViewBag.AvgCost.ToString("N0")</h3>
+                    <p>Average Cost</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Monthly Breakdown -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Monthly Breakdown (Last 6 Months)</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table">
+                        <thead>
+                            <tr><th>Year-Month</th><th>Number of Requests</th><th>Total Value (ZAR)</th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in ViewBag.RequestsByMonth)
+                            {
+                                <tr>
+                                    <td>@item.Year-@item.Month.ToString("D2")</td>
+                                    <td>@item.Count</td>
+                                    <td><strong>R @item.Total.ToString("N2")</strong></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Requests -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Recent Service Requests</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table">
+                        <thead>
+                            <tr><th>Request #</th><th>Client</th><th>Description</th><th>Cost (USD)</th><th>Cost (ZAR)</th><th>Status</th><th>Date</th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var request in ViewBag.RecentRequests)
+                            {
+                                <tr>
+                                    <td>@request.RequestNumber</td>
+                                    <td>@request.Contract?.Client?.Name</td>
+                                    <td>@request.Description</td>
+                                    <td>$@request.Cost.ToString("N2")</td>
+                                    <td><strong>R @request.CostInZAR.ToString("N2")</strong></td>
+                                    <td>@request.Status</td>
+                                    <td>@request.RequestDate.ToShortDateString()</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

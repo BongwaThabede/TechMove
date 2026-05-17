@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QuestPDF.Fluent;
@@ -6,7 +7,6 @@ using QuestPDF.Infrastructure;
 using System.Diagnostics;
 using TechMove.Data;
 using TechMove.Models;
-using TechMove.Security;
 using TechMove.Services;
 
 namespace TechMove.Controllers
@@ -27,70 +27,30 @@ namespace TechMove.Controllers
             _currencyService = currencyService;
         }
 
+        // GET: Landing Page (PUBLIC - no authentication required)
         public IActionResult Index()
         {
-            if (HttpContext.IsLoggedIn())
+            // If user is already logged in, redirect to dashboard
+            if (User.Identity?.IsAuthenticated == true)
             {
-                return RedirectToAction(nameof(Dashboard));
+                return RedirectToAction("Index", "Dashboard");
             }
-
+            
+            // Show landing page with login form
             return View(new LoginViewModel());
         }
 
-        public async Task<IActionResult> Dashboard()
+        // GET: Dashboard (redirects to Dashboard controller)
+        [Authorize]
+        public IActionResult Dashboard()
         {
-            if (!HttpContext.IsLoggedIn())
-            {
-                return RedirectToAction("Login", "Account");
-            }
-
-            var username = HttpContext.GetCurrentUser() ?? "User";
-            var role = HttpContext.GetCurrentRole() ?? string.Empty;
-
-            if (!role.Equals("Admin", StringComparison.OrdinalIgnoreCase))
-            {
-                ViewBag.Username = username;
-                ViewBag.Role = role;
-                return View();
-            }
-
-            var activeContracts = await _context.Contracts.CountAsync(c => c.Status == "Active");
-            var pendingRequests = await _context.ServiceRequests.CountAsync(r => r.Status == "Pending");
-            var totalClients = await _context.Clients.CountAsync();
-            var rate = await _currencyService.GetUSDToZARRateAsync();
-
-            var recent = await _context.Contracts
-                .Include(c => c.Client)
-                .OrderByDescending(c => c.Id)
-                .Take(3)
-                .Select(c => new DashboardViewModel.RecentContractItem
-                {
-                    ContractId = c.Id,
-                    ClientName = c.Client != null ? c.Client.Name : "Unknown",
-                    Status = c.Status
-                })
-                .ToListAsync();
-
-            var vm = new DashboardViewModel
-            {
-                Username = username,
-                Role = role,
-                ActiveContracts = activeContracts,
-                PendingRequests = pendingRequests,
-                TotalClients = totalClients,
-                CurrencyRateUsdToZar = rate,
-                RecentActivity = recent
-            };
-
-            return View(vm);
+            return RedirectToAction("Index", "Dashboard");
         }
 
-        [HttpGet]
+        // GET: Export Report (Admin only)
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> ExportReport()
         {
-            if (!HttpContext.IsLoggedIn()) return RedirectToAction("Login", "Account");
-            if (!HttpContext.HasAnyRole("Admin")) return Forbid();
-
             var contracts = await _context.Contracts
                 .Include(c => c.Client)
                 .OrderByDescending(c => c.Id)
@@ -108,7 +68,7 @@ namespace TechMove.Controllers
                     page.Header().Column(column =>
                     {
                         column.Item().Text("TechMove GLMS").FontSize(18).SemiBold().FontColor(Colors.Blue.Darken3);
-                        column.Item().Text("Contracts export report").FontSize(12).FontColor(Colors.Grey.Darken2);
+                        column.Item().Text("Contracts Export Report").FontSize(12).FontColor(Colors.Grey.Darken2);
                         column.Item().Text($"Generated (UTC): {generatedAt:yyyy-MM-dd HH:mm}").FontSize(9).FontColor(Colors.Grey.Medium);
                     });
 
@@ -116,11 +76,11 @@ namespace TechMove.Controllers
                     {
                         table.ColumnsDefinition(columns =>
                         {
-                            columns.ConstantColumn(72);
+                            columns.ConstantColumn(50);
                             columns.RelativeColumn(2);
                             columns.RelativeColumn(1);
-                            columns.ConstantColumn(88);
-                            columns.ConstantColumn(88);
+                            columns.ConstantColumn(85);
+                            columns.ConstantColumn(85);
                             columns.RelativeColumn(1);
                         });
 
@@ -135,17 +95,17 @@ namespace TechMove.Controllers
 
                         table.Header(header =>
                         {
-                            header.Cell().Element(c => CellStyle(c, true)).Text("ID").SemiBold();
+                            header.Cell().Element(c => CellStyle(c, true)).Text("#").SemiBold();
                             header.Cell().Element(c => CellStyle(c, true)).Text("Client").SemiBold();
                             header.Cell().Element(c => CellStyle(c, true)).Text("Status").SemiBold();
-                            header.Cell().Element(c => CellStyle(c, true)).Text("Start").SemiBold();
-                            header.Cell().Element(c => CellStyle(c, true)).Text("End").SemiBold();
-                            header.Cell().Element(c => CellStyle(c, true)).Text("Service level").SemiBold();
+                            header.Cell().Element(c => CellStyle(c, true)).Text("Start Date").SemiBold();
+                            header.Cell().Element(c => CellStyle(c, true)).Text("End Date").SemiBold();
+                            header.Cell().Element(c => CellStyle(c, true)).Text("Service Level").SemiBold();
                         });
 
                         foreach (var c in contracts)
                         {
-                            table.Cell().Element(c => CellStyle(c)).Text(c.Id.ToString());
+                            table.Cell().Element(c => CellStyle(c)).Text(c.ContractNumber);
                             table.Cell().Element(c => CellStyle(c)).Text(c.Client?.Name ?? "—");
                             table.Cell().Element(c => CellStyle(c)).Text(c.Status);
                             table.Cell().Element(c => CellStyle(c)).Text(c.StartDate.ToString("yyyy-MM-dd"));
@@ -165,7 +125,7 @@ namespace TechMove.Controllers
                 });
             }).GeneratePdf();
 
-            return File(pdfBytes, "application/pdf", "techmove-contracts-report.pdf");
+            return File(pdfBytes, "application/pdf", $"techmove-contracts-report-{generatedAt:yyyyMMdd}.pdf");
         }
 
         public IActionResult Privacy()

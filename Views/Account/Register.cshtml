@@ -1,75 +1,170 @@
 @model RegisterViewModel
 @{
-    ViewData["Title"] = "Create Your Account";
+    ViewData["Title"] = "Create Account - TechMove GLMS";
     Layout = "_LayoutLanding";
 }
 
-<div class="landing-login-card landing-register-card">
-    <h2 class="landing-login-title">Create Your Account</h2>
+<style>
+    .register-wrapper {
+        max-width: 800px;
+        width: 100%;
+        margin: 0 auto;
+    }
+    
+    .card {
+        border-radius: 16px !important;
+        overflow: hidden;
+    }
+    
+    .section-header {
+        color: #495057;
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+    
+    .section-header i {
+        color: #667eea;
+        font-size: 1.2rem;
+    }
+    
+    .section-header hr {
+        margin-top: 8px;
+        margin-bottom: 0;
+        border-color: #e9ecef;
+    }
+    
+    .account-type-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 12px;
+    }
+    
+    .account-type-option {
+        padding: 12px 16px;
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        background: white;
+    }
+    
+    .account-type-option:hover {
+        border-color: #667eea;
+        background-color: #f8f9fa;
+    }
+    
+    .account-type-option.selected {
+        border-color: #28a745;
+        background-color: #d4edda;
+    }
+    
+    .account-type-option label {
+        margin-left: 8px;
+        cursor: pointer;
+        display: inline-block;
+        width: calc(100% - 30px);
+    }
+    
+    .account-type-option label i {
+        margin-right: 10px;
+        width: 24px;
+    }
+    
+    .agreement-card {
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        padding: 16px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background-color: #fff;
+        margin-bottom: 12px;
+    }
+    
+    .agreement-card:hover {
+        border-color: #28a745;
+        background-color: #f8fff9;
+    }
+    
+    .agreement-card.checked {
+        border-color: #28a745;
+        background-color: #d4edda;
+    }
+    
+    .agreement-card .form-check {
+        margin-bottom: 0;
+    }
+    
+    .agreement-card .form-check-label {
+        cursor: pointer;
+        font-size: 1rem;
+        font-weight: 500;
+    }
+    
+    .agreement-card .form-check-label i {
+        margin-right: 8px;
+    }
+    
+    .agreement-preview {
+        margin-top: 12px;
+        padding: 10px;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        display: none;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        border: none;
+        padding: 12px;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+    
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #218838 0%, #1ba87e 100%);
+    }
+    
+    .text-danger {
+        font-size: 0.875rem;
+    }
+    
+    .validation-error {
+        color: #dc3545;
+        font-size: 0.8rem;
+        margin-top: 0.25rem;
+    }
+    
+    @@media (max-width: 768px) {
+        .register-wrapper {
+            padding: 0 15px;
+        }
+        .account-type-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
 
-    <form asp-action="Register" method="post" class="landing-register-form">
-        <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+<div class="register-wrapper">
+    <div class="card shadow-lg border-0">
+        <div class="card-header bg-white border-0 pt-4">
+            <div class="text-center">
+                <i class="fas fa-user-plus fa-3x text-primary mb-3"></i>
+                <h2 class="mb-0">Create Your Account</h2>
+                <p class="text-muted mt-2">Join TechMove Global Logistics Management System</p>
+            </div>
+        </div>
+        
+        <div class="card-body p-4 p-lg-5">
+            <form asp-controller="Account" asp-action="Register" method="post" id="registerForm">
+                @Html.AntiForgeryToken()
+                
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
 
-        <section class="landing-form-section" aria-labelledby="reg-personal">
-            <h3 id="reg-personal" class="landing-form-section-title">Personal Information</h3>
-            <div class="landing-field">
-                <label asp-for="FirstName" class="landing-label"></label>
-                <input asp-for="FirstName" class="form-control landing-input" autocomplete="given-name" />
-                <span asp-validation-for="FirstName" class="text-danger small"></span>
-            </div>
-            <div class="landing-field">
-                <label asp-for="LastName" class="landing-label"></label>
-                <input asp-for="LastName" class="form-control landing-input" autocomplete="family-name" />
-                <span asp-validation-for="LastName" class="text-danger small"></span>
-            </div>
-            <div class="landing-field">
-                <label asp-for="Email" class="landing-label"></label>
-                <input asp-for="Email" type="email" class="form-control landing-input" autocomplete="email" />
-                <span asp-validation-for="Email" class="text-danger small"></span>
-            </div>
-            <div class="landing-field">
-                <label asp-for="Phone" class="landing-label"></label>
-                <input asp-for="Phone" type="tel" class="form-control landing-input" autocomplete="tel" />
-                <span asp-validation-for="Phone" class="text-danger small"></span>
-            </div>
-            <div class="landing-field">
-                <label asp-for="Password" class="landing-label"></label>
-                <input asp-for="Password" class="form-control landing-input" autocomplete="new-password" />
-                <span asp-validation-for="Password" class="text-danger small"></span>
-            </div>
-            <div class="landing-field">
-                <label asp-for="ConfirmPassword" class="landing-label"></label>
-                <input asp-for="ConfirmPassword" class="form-control landing-input" autocomplete="new-password" />
-                <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
-            </div>
-        </section>
-
-        <section class="landing-form-section" aria-labelledby="reg-company">
-            <h3 id="reg-company" class="landing-form-section-title">Company Information</h3>
-            <div class="landing-field">
-                <label asp-for="CompanyName" class="landing-label"></label>
-                <input asp-for="CompanyName" class="form-control landing-input" autocomplete="organization" />
-                <span asp-validation-for="CompanyName" class="text-danger small"></span>
-            </div>
-            <div class="landing-field">
-                <label asp-for="CompanyType" class="landing-label"></label>
-                <select asp-for="CompanyType" class="form-select landing-input landing-select">
-                    <option value="">Select company type…</option>
-                    @foreach (var opt in RegisterViewModel.CompanyTypeOptions)
-                    {
-                        <option value="@opt">@opt</option>
-                    }
-                </select>
-                <span asp-validation-for="CompanyType" class="text-danger small"></span>
-            </div>
-        </section>
-
-        <section class="landing-form-section" aria-labelledby="reg-account-type">
-            <h3 id="reg-account-type" class="landing-form-section-title">Account Type</h3>
-            <div class="landing-radio-group" role="radiogroup" aria-labelledby="reg-account-type">
-                <div class="form-check landing-radio">
-                    <input class="form-check-input" type="radio" asp-for="AccountType" value="LogisticsManager" id="acc-logistics" />
-                    <label class="form-check-label" for="acc-logistics">Logistics Manager</label>
+                <!-- Personal Information -->
+                <div class="section-header">
+                    <i class="fas fa-user-circle me-2"></i>
+                    <h5 class="d-inline">Personal Information</h5>
+                    <hr />
                 </div>
                 <div class="form-check landing-radio">
                     <input class="form-check-input" type="radio" asp-for="AccountType" value="GeneralUser" id="acc-client" />
@@ -87,36 +182,292 @@
                     <input class="form-check-input" type="radio" asp-for="AccountType" value=" Contract Manager" id="acc-contract" />
                     <label class="form-check-label" for="acc-contract">Contract Manager</label>
                 </div>
-            </div>
-            <span asp-validation-for="AccountType" class="text-danger small d-block"></span>
-        </section>
 
-        <section class="landing-form-section landing-form-section-checks" aria-label="Agreements">
-            <div class="form-check landing-check">
-                <input class="form-check-input" asp-for="AgreeTerms" id="agree-terms" />
-                <label class="form-check-label" for="agree-terms">I agree to Terms &amp; Conditions</label>
-            </div>
-            <span asp-validation-for="AgreeTerms" class="text-danger small d-block"></span>
-            <div class="form-check landing-check">
-                <input class="form-check-input" asp-for="AgreePrivacy" id="agree-privacy" />
-                <label class="form-check-label" for="agree-privacy">I agree to Privacy Policy</label>
-            </div>
-            <span asp-validation-for="AgreePrivacy" class="text-danger small d-block"></span>
-        </section>
+                <div class="row g-3 mt-1">
+                    <div class="col-md-6">
+                        <label asp-for="Password" class="form-label fw-bold"></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                            <input asp-for="Password" type="password" class="form-control" id="Password" placeholder="••••••" />
+                            <button class="btn btn-outline-secondary toggle-password" type="button" data-target="Password">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <span asp-validation-for="Password" class="text-danger small"></span>
+                        <small class="text-muted">Password must be at least 6 characters</small>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="ConfirmPassword" class="form-label fw-bold"></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-check-circle"></i></span>
+                            <input asp-for="ConfirmPassword" type="password" class="form-control" id="ConfirmPassword" placeholder="••••••" />
+                            <button class="btn btn-outline-secondary toggle-password" type="button" data-target="ConfirmPassword">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+                    </div>
+                </div>
 
-        <div class="landing-register-actions">
-            <button type="submit" class="btn landing-login-btn landing-register-submit">Create Account</button>
-            <a class="btn landing-cancel-btn" asp-controller="Account" asp-action="Login">Cancel</a>
+                <!-- Company Information -->
+                <div class="section-header mt-4">
+                    <i class="fas fa-building me-2"></i>
+                    <h5 class="d-inline">Company Information</h5>
+                    <hr />
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="CompanyName" class="form-label fw-bold"></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-building"></i></span>
+                            <input asp-for="CompanyName" class="form-control" placeholder="Enter company name" />
+                        </div>
+                        <span asp-validation-for="CompanyName" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="CompanyType" class="form-label fw-bold"></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-industry"></i></span>
+                            <select asp-for="CompanyType" class="form-select">
+                                <option value="">-- Select company type --</option>
+                                @foreach (var opt in RegisterViewModel.CompanyTypeOptions)
+                                {
+                                    <option value="@opt">@opt</option>
+                                }
+                            </select>
+                        </div>
+                        <span asp-validation-for="CompanyType" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <!-- Account Type Section -->
+                <div id="accountTypeSection">
+                    <div class="section-header mt-4">
+                        <i class="fas fa-user-tag me-2"></i>
+                        <h5 class="d-inline">Account Type</h5>
+                        <hr />
+                    </div>
+                    
+                    <div id="internalEmailNote" class="alert alert-info small">
+                        <i class="fas fa-info-circle"></i> TechMove employee? Please select your role.
+                    </div>
+                    
+                    <div id="externalEmailNote" class="alert alert-success small" style="display: none;">
+                        <i class="fas fa-check-circle"></i> You will be registered as a <strong>Client</strong>.
+                    </div>
+
+                    <div class="row mb-3" id="roleSelectionDiv">
+                        <div class="col-12">
+                            <div class="account-type-grid">
+                                @foreach (var option in RegisterViewModel.AccountTypeOptions)
+                                {
+                                    <div class="account-type-option">
+                                        <input class="form-check-input" type="radio" asp-for="AccountType" value="@option.Value" id="@option.Value">
+                                        <label class="form-check-label" for="@option.Value">
+                                            @if (option.Value == "Admin")
+                                            {
+                                                <i class="fas fa-crown text-danger"></i>
+                                            }
+                                            else if (option.Value == "LogisticsManager")
+                                            {
+                                                <i class="fas fa-truck text-primary"></i>
+                                            }
+                                            else if (option.Value == "Finance")
+                                            {
+                                                <i class="fas fa-chart-line text-info"></i>
+                                            }
+                                            else if (option.Value == "ContractManager")
+                                            {
+                                                <i class="fas fa-file-signature text-warning"></i>
+                                            }
+                                            <span>@option.Text</span>
+                                        </label>
+                                    </div>
+                                }
+                            </div>
+                            <span asp-validation-for="AccountType" class="text-danger small"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Agreements -->
+                <div class="section-header mt-4">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <h5 class="d-inline">Agreements</h5>
+                    <hr />
+                </div>
+
+                <!-- Terms & Conditions -->
+                <div class="agreement-card" id="termsCard">
+                    <div class="form-check">
+                        <input class="form-check-input" asp-for="AgreeTerms" id="agreeTerms" type="checkbox" />
+                        <label class="form-check-label" for="agreeTerms">
+                            <i class="fas fa-file-contract text-primary"></i>
+                            I agree to the <strong>Terms &amp; Conditions</strong> <span class="text-danger">*</span>
+                        </label>
+                    </div>
+                    <div class="agreement-preview">
+                        <small class="text-muted">By using TechMove GLMS, you agree to provide accurate information and comply with all applicable laws.</small>
+                    </div>
+                </div>
+                <span asp-validation-for="AgreeTerms" class="text-danger small"></span>
+
+                <!-- Privacy Policy -->
+                <div class="agreement-card mt-3" id="privacyCard">
+                    <div class="form-check">
+                        <input class="form-check-input" asp-for="AgreePrivacy" id="agreePrivacy" type="checkbox" />
+                        <label class="form-check-label" for="agreePrivacy">
+                            <i class="fas fa-shield-alt text-success"></i>
+                            I agree to the <strong>Privacy Policy</strong> <span class="text-danger">*</span>
+                        </label>
+                    </div>
+                    <div class="agreement-preview">
+                        <small class="text-muted">Your personal data is collected for service delivery. We do not sell your data to third parties.</small>
+                    </div>
+                </div>
+                <span asp-validation-for="AgreePrivacy" class="text-danger small"></span>
+
+                <!-- Submit Buttons -->
+                <div class="d-grid gap-3 mt-4">
+                    <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                        <i class="fas fa-user-plus me-2"></i>Create Account
+                    </button>
+                    <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Login
+                    </a>
+                </div>
+            </form>
+
+            <div class="text-center mt-4">
+                <p class="mb-0">
+                    Already have an account?
+                    <a asp-controller="Home" asp-action="Index" class="text-decoration-none fw-bold">
+                        <i class="fas fa-sign-in-alt me-1"></i>Login here
+                    </a>
+                </p>
+            </div>
         </div>
-    </form>
-
-    <p class="landing-register-footer mb-0">
-        Already have an account? <a asp-controller="Account" asp-action="Login">Login</a>.
-    </p>
+    </div>
 </div>
 
 @section Scripts {
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+    
+    <script>
+        // Toggle password visibility
+        var toggleButtons = document.querySelectorAll('.toggle-password');
+        for (var i = 0; i < toggleButtons.length; i++) {
+            toggleButtons[i].addEventListener('click', function() {
+                var targetId = this.getAttribute('data-target');
+                var passwordInput = document.getElementById(targetId);
+                var icon = this.querySelector('i');
+                
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    icon.classList.remove('fa-eye');
+                    icon.classList.add('fa-eye-slash');
+                } else {
+                    passwordInput.type = 'password';
+                    icon.classList.remove('fa-eye-slash');
+                    icon.classList.add('fa-eye');
+                }
+            });
+        }
+
+        // Get elements
+        var termsCard = document.getElementById('termsCard');
+        var termsCheckbox = document.getElementById('agreeTerms');
+        var privacyCard = document.getElementById('privacyCard');
+        var privacyCheckbox = document.getElementById('agreePrivacy');
+        
+        // Terms card click - toggle checkbox
+        if (termsCard && termsCheckbox) {
+            termsCard.addEventListener('click', function(e) {
+                if (e.target !== termsCheckbox && e.target.type !== 'checkbox') {
+                    termsCheckbox.checked = !termsCheckbox.checked;
+                    var event = new Event('change', { bubbles: true });
+                    termsCheckbox.dispatchEvent(event);
+                }
+            });
+            
+            termsCheckbox.addEventListener('change', function() {
+                if (this.checked) {
+                    termsCard.classList.add('checked');
+                } else {
+                    termsCard.classList.remove('checked');
+                }
+            });
+        }
+        
+        // Privacy card click - toggle checkbox
+        if (privacyCard && privacyCheckbox) {
+            privacyCard.addEventListener('click', function(e) {
+                if (e.target !== privacyCheckbox && e.target.type !== 'checkbox') {
+                    privacyCheckbox.checked = !privacyCheckbox.checked;
+                    var event = new Event('change', { bubbles: true });
+                    privacyCheckbox.dispatchEvent(event);
+                }
+            });
+            
+            privacyCheckbox.addEventListener('change', function() {
+                if (this.checked) {
+                    privacyCard.classList.add('checked');
+                } else {
+                    privacyCard.classList.remove('checked');
+                }
+            });
+        }
+        
+        // Preview on hover
+        if (termsCard) {
+            var termsPreview = termsCard.querySelector('.agreement-preview');
+            termsCard.addEventListener('mouseenter', function() {
+                if (termsPreview) termsPreview.style.display = 'block';
+            });
+            termsCard.addEventListener('mouseleave', function() {
+                if (termsPreview) termsPreview.style.display = 'none';
+            });
+        }
+        
+        if (privacyCard) {
+            var privacyPreview = privacyCard.querySelector('.agreement-preview');
+            privacyCard.addEventListener('mouseenter', function() {
+                if (privacyPreview) privacyPreview.style.display = 'block';
+            });
+            privacyCard.addEventListener('mouseleave', function() {
+                if (privacyPreview) privacyPreview.style.display = 'none';
+            });
+        }
+        
+        // Email domain check for account type
+        var emailInput = document.getElementById('Email');
+        var internalNote = document.getElementById('internalEmailNote');
+        var externalNote = document.getElementById('externalEmailNote');
+        var roleSelectionDiv = document.getElementById('roleSelectionDiv');
+        
+        function checkEmailDomain() {
+            if (emailInput) {
+                var email = emailInput.value;
+                var isInternal = email && email.toLowerCase().indexOf('techmove.com') > -1;
+                
+                if (isInternal) {
+                    if (internalNote) internalNote.style.display = 'block';
+                    if (externalNote) externalNote.style.display = 'none';
+                    if (roleSelectionDiv) roleSelectionDiv.style.display = 'block';
+                } else {
+                    if (internalNote) internalNote.style.display = 'none';
+                    if (externalNote) externalNote.style.display = 'block';
+                    if (roleSelectionDiv) roleSelectionDiv.style.display = 'none';
+                }
+            }
+        }
+        
+        if (emailInput) {
+            emailInput.addEventListener('input', checkEmailDomain);
+            checkEmailDomain();
+        }
+    </script>
 }
