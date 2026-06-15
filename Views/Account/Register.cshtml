@@ -166,43 +166,21 @@
                     <h5 class="d-inline">Personal Information</h5>
                     <hr />
                 </div>
-
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label asp-for="FirstName" class="form-label fw-bold"></label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-user"></i></span>
-                            <input asp-for="FirstName" class="form-control" placeholder="Enter first name" />
-                        </div>
-                        <span asp-validation-for="FirstName" class="text-danger small"></span>
-                    </div>
-                    <div class="col-md-6">
-                        <label asp-for="LastName" class="form-label fw-bold"></label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-user"></i></span>
-                            <input asp-for="LastName" class="form-control" placeholder="Enter last name" />
-                        </div>
-                        <span asp-validation-for="LastName" class="text-danger small"></span>
-                    </div>
+                <div class="form-check landing-radio">
+                    <input class="form-check-input" type="radio" asp-for="AccountType" value="GeneralUser" id="acc-client" />
+                    <label class="form-check-label" for="acc-client">Client</label>
                 </div>
-
-                <div class="row g-3 mt-1">
-                    <div class="col-md-6">
-                        <label asp-for="Email" class="form-label fw-bold"></label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-envelope"></i></span>
-                            <input asp-for="Email" type="email" class="form-control" id="Email" placeholder="email@@example.com" />
-                        </div>
-                        <span asp-validation-for="Email" class="text-danger small"></span>
-                    </div>
-                    <div class="col-md-6">
-                        <label asp-for="Phone" class="form-label fw-bold"></label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-phone"></i></span>
-                            <input asp-for="Phone" class="form-control" placeholder="+27 XX XXX XXXX" />
-                        </div>
-                        <span asp-validation-for="Phone" class="text-danger small"></span>
-                    </div>
+                <div class="form-check landing-radio">
+                    <input class="form-check-input" type="radio" asp-for="AccountType" value="Finance Officer" id="acc-finance" />
+                    <label class="form-check-label" for="acc-finance">Finance Officer</label>
+                </div>
+                <div class="form-check landing-radio">
+                    <input class="form-check-input" type="radio" asp-for="AccountType" value="Administrator" id="acc-admin" />
+                    <label class="form-check-label" for="acc-viewer">Administrator</label>
+                </div>
+                <div class="form-check landing-radio">
+                    <input class="form-check-input" type="radio" asp-for="AccountType" value=" Contract Manager" id="acc-contract" />
+                    <label class="form-check-label" for="acc-contract">Contract Manager</label>
                 </div>
 
                 <div class="row g-3 mt-1">

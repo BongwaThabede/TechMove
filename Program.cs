@@ -20,7 +20,7 @@ builder.Services.AddSession(options =>
 
 builder.Services.AddHttpContextAccessor();
 
-// ✅ Register API client
+// ✅ Register API client (calls TechMove.API)
 builder.Services.AddHttpClient<IApiClient, ApiClient>(client =>
 {
     var apiBaseUrl = builder.Configuration["ApiBaseUrl"] ?? "http://localhost:5000";
@@ -28,18 +28,18 @@ builder.Services.AddHttpClient<IApiClient, ApiClient>(client =>
     client.DefaultRequestHeaders.Add("Accept", "application/json");
 });
 
-// ✅ Register business services (needed by HomeController, etc.)
+// ✅ Register business services (needed by Dashboard, etc.)
 builder.Services.AddScoped<ICurrencyService, CurrencyService>();
 builder.Services.AddScoped<IContractStatusService, ContractStatusService>();
 builder.Services.AddScoped<IFileValidationService, FileValidationService>();
 builder.Services.AddScoped<IFileUploadService, FileUploadService>();
 builder.Services.AddHttpClient<ICurrencyService, CurrencyService>();
 
-// ✅ Keep DbContext ONLY for Identity (controllers will NOT inject it)
+// ✅ Keep DbContext ONLY for Identity (your MVC controllers no longer use it)
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// ✅ Identity configuration (single registration)
+// ✅ Identity configuration
 builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
 {
     options.Password.RequireDigit = false;
@@ -52,11 +52,12 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
 })
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders()
-.AddDefaultUI();   // Provides the default Identity UI pages
+.AddDefaultUI();
 
+// ✅ Cookie settings – point to your custom AccountController
 builder.Services.ConfigureApplicationCookie(options =>
 {
-    options.LoginPath = "/Account/Login";          // Match your custom controller
+    options.LoginPath = "/Account/Login";
     options.LogoutPath = "/Account/Logout";
     options.AccessDeniedPath = "/Account/AccessDenied";
     options.ExpireTimeSpan = TimeSpan.FromHours(4);

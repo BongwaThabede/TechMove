@@ -9,6 +9,7 @@ namespace TechMove.Controllers
 {
     public class AccountController : Controller
     {
+
         private readonly UserManager<IdentityUser> _userManager;
         private readonly SignInManager<IdentityUser> _signInManager;
         private readonly RoleManager<IdentityRole> _roleManager;
@@ -28,6 +29,17 @@ namespace TechMove.Controllers
             _context = context;
             _logger = logger;
         }
+
+        private static readonly ConcurrentDictionary<string, (string Password, string Role)> Users = new(
+            new Dictionary<string, (string Password, string Role)>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["admin"] = ("Admin@123", "Admin"),
+                ["manager"] = ("Manager@123", "LogisticsManager"),
+                ["user"] = ("User@123", "GeneralUser")
+            },
+            StringComparer.OrdinalIgnoreCase);
+
+       private static readonly ConcurrentDictionary<string, TechMove.Models.RegisteredUserProfile> RegisteredProfiles = new(StringComparer.OrdinalIgnoreCase); main
 
         // GET: Login
         [HttpGet]
@@ -103,8 +115,10 @@ namespace TechMove.Controllers
                 ModelState.AddModelError("Email", "An account with this email already exists.");
                 return View(model);
             }
-
+            
             var user = new IdentityUser
+
+            RegisteredProfiles[key] = new TechMove.Models.RegisteredUserProfilemain
             {
                 UserName = model.Email,
                 Email = model.Email,
