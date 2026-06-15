@@ -27,10 +27,10 @@ namespace TechMove.Controllers
             _logger = logger;
         }
 
-        // GET: ServiceRequests/Create
+        
         public async Task<IActionResult> Create(int? contractId)
         {
-            // ✅ FIXED: Use Identity pages for login redirect
+            
             if (!HttpContext.IsLoggedIn()) return RedirectToPage("/Account/Login", new { area = "Identity" });
             if (!HttpContext.HasAnyRole("LogisticsManager", "Admin")) return Forbid();
 

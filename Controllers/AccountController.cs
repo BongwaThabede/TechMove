@@ -48,20 +48,20 @@ namespace TechMove.Controllers
         public async Task<IActionResult> Login(LoginViewModel model, string? returnUrl = null)
         {
             returnUrl ??= Url.Content("~/Dashboard");
-            
+
             if (ModelState.IsValid)
             {
                 var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, lockoutOnFailure: false);
-                
+
                 if (result.Succeeded)
                 {
                     _logger.LogInformation("User logged in: {Email}", model.Email);
                     return LocalRedirect(returnUrl);
                 }
-                
+
                 ModelState.AddModelError(string.Empty, "Invalid login attempt.");
             }
-            
+
             return View(model);
         }
 

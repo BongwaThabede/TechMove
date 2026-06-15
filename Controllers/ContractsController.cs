@@ -1,85 +1,88 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
-using TechMove.Data;
+using TechMove.Dtos.Requests;
+using TechMove.Dtos.Responses;
 using TechMove.Models;
 using TechMove.Services;
+using TechMove.Dtos.Requests;   // Add this
+using TechMove.Dtos.Responses;
 
 namespace TechMove.Controllers
 {
     [Authorize]
     public class ContractsController : Controller
     {
-        private readonly ApplicationDbContext _context;
-        private readonly ICurrencyService _currencyService;
+        private readonly IApiClient _apiClient;
         private readonly IFileValidationService _fileValidationService;
-        private readonly IContractStatusService _contractStatusService;
         private readonly IWebHostEnvironment _environment;
         private readonly ILogger<ContractsController> _logger;
 
         public ContractsController(
-            ApplicationDbContext context,
-            ICurrencyService currencyService,
+            IApiClient apiClient,
             IFileValidationService fileValidationService,
-            IContractStatusService contractStatusService,
             IWebHostEnvironment environment,
             ILogger<ContractsController> logger)
         {
-            _context = context;
-            _currencyService = currencyService;
+            _apiClient = apiClient;
             _fileValidationService = fileValidationService;
-            _contractStatusService = contractStatusService;
             _environment = environment;
             _logger = logger;
         }
 
         // GET: Contracts
-       // GET: Contracts with optional status filter
-public async Task<IActionResult> Index(string? status)
-{
-    await _contractStatusService.SyncAllAsync(DateTime.UtcNow.Date);
+        public async Task<IActionResult> Index(string? status)
+        {
+            var contractDtos = await _apiClient.GetContractsAsync(status);
+            var contracts = contractDtos.Select(static dto => new Contract
+            {
+                Id = dto.Id,
+                ClientId = dto.ClientId,
+                Client = new Client { Name = dto.ClientName },
+                StartDate = dto.StartDate,
+                EndDate = dto.EndDate,
+                Status = dto.Status,
+                ServiceLevel = dto.ServiceLevel,
+                ContractNumber = dto.ContractNumber,
+                ContractValueUSD = dto.ContractValueUSD,
+                ContractValueZAR = dto.ContractValueZAR,
+                CreatedDate = dto.CreatedDate,
+                LastModifiedDate = dto.LastModifiedDate
+            }).ToList();
+            return View(contracts);
+        }
 
-    var query = _context.Contracts
-        .Include(c => c.Client)
-        .AsQueryable();
-
-    // Filter by status if provided
-    if (!string.IsNullOrEmpty(status) && status != "All")
-    {
-        query = query.Where(c => c.Status == status);
-    }
-
-    var contracts = await query
-        .OrderByDescending(c => c.CreatedDate)
-        .ToListAsync();
-    
-    return View(contracts);
-}
         // GET: Contracts/Details/5
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null) return NotFound();
+            var dto = await _apiClient.GetContractAsync(id.Value);
+            if (dto == null) return NotFound();
 
-            var contract = await _context.Contracts
-                .Include(c => c.Client)
-                .FirstOrDefaultAsync(m => m.Id == id);
-            
-            if (contract == null) return NotFound();
-
-            if (_contractStatusService.SyncSingle(contract, DateTime.UtcNow.Date))
+            var contract = new Contract
             {
-                await _context.SaveChangesAsync();
-            }
-
+                Id = dto.Id,
+                ClientId = dto.ClientId,
+                Client = new Client { Name = dto.ClientName },
+                StartDate = dto.StartDate,
+                EndDate = dto.EndDate,
+                Status = dto.Status,
+                ServiceLevel = dto.ServiceLevel,
+                ContractNumber = dto.ContractNumber,
+                ContractValueUSD = dto.ContractValueUSD,
+                ContractValueZAR = dto.ContractValueZAR,
+                CreatedDate = dto.CreatedDate,
+                LastModifiedDate = dto.LastModifiedDate
+            };
             return View(contract);
         }
 
         // GET: Contracts/Create
         [Authorize(Roles = "Admin,LogisticsManager")]
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
-            ViewData["ClientId"] = new SelectList(_context.Clients, "Id", "Name");
+            var clients = await _apiClient.GetClientsAsync();
+            ViewData["ClientId"] = new SelectList(clients, "Id", "Name");
             return View();
         }
 
@@ -87,47 +90,41 @@ public async Task<IActionResult> Index(string? status)
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin,LogisticsManager")]
-        public async Task<IActionResult> Create([Bind("ClientId,StartDate,EndDate,Status,ServiceLevel,ContractNumber,ContractValueUSD")] Contract contract, IFormFile? signedAgreement)
+        public async Task<IActionResult> Create([Bind("ClientId,StartDate,EndDate,Status,ServiceLevel,ContractNumber,ContractValueUSD")] TechMove.Dtos.Requests.CreateContractRequest contract, IFormFile? signedAgreement)
         {
-            if (signedAgreement != null && signedAgreement.Length > 0)
-            {
-                if (!_fileValidationService.IsValidPdf(signedAgreement))
-                {
-                    ModelState.AddModelError("SignedAgreement", "Only PDF files are allowed.");
-                    ViewData["ClientId"] = new SelectList(_context.Clients, "Id", "Name", contract.ClientId);
-                    return View(contract);
-                }
-
-                var uploadsFolder = Path.Combine(_environment.WebRootPath ?? _environment.ContentRootPath, "uploads", "contracts");
-                Directory.CreateDirectory(uploadsFolder);
-                
-                var uniqueFileName = $"{Guid.NewGuid()}{Path.GetExtension(signedAgreement.FileName)}";
-                var filePath = Path.Combine(uploadsFolder, uniqueFileName);
-                
-                using (var stream = new FileStream(filePath, FileMode.Create))
-                {
-                    await signedAgreement.CopyToAsync(stream);
-                }
-
-                contract.SignedAgreementPath = $"/uploads/contracts/{uniqueFileName}";
-                contract.SignedAgreementFileName = signedAgreement.FileName;
-                contract.AgreementUploadDate = DateTime.UtcNow;
-            }
-
-            // Get exchange rate for USD to ZAR conversion
-            var rate = await _currencyService.GetUSDToZARRateAsync();
-            contract.ContractValueZAR = contract.ContractValueUSD * rate;
-            contract.CreatedDate = DateTime.UtcNow;
-
             if (ModelState.IsValid)
             {
-                _context.Add(contract);
-                await _context.SaveChangesAsync();
-                TempData["SuccessMessage"] = "Contract created successfully!";
-                return RedirectToAction(nameof(Index));
+                try
+                {
+                    await _apiClient.CreateContractAsync(contract);
+
+                    // If file uploaded, send to API (needs an endpoint like POST /api/v1/contracts/{id}/upload)
+                    if (signedAgreement != null && signedAgreement.Length > 0)
+                    {
+                        if (!_fileValidationService.IsValidPdf(signedAgreement))
+                        {
+                            ModelState.AddModelError("SignedAgreement", "Only PDF files are allowed.");
+                            var clients = await _apiClient.GetClientsAsync();
+                            ViewData["ClientId"] = new SelectList(clients, "Id", "Name", contract.ClientId);
+                            return View(contract);
+                        }
+
+                        // TODO: Call API file upload endpoint
+                        // await _apiClient.UploadAgreementAsync(created.Id, signedAgreement);
+                    }
+
+                    TempData["SuccessMessage"] = "Contract created successfully!";
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error creating contract");
+                    ModelState.AddModelError("", "Failed to create contract. Please try again.");
+                }
             }
-            
-            ViewData["ClientId"] = new SelectList(_context.Clients, "Id", "Name", contract.ClientId);
+
+            var clientsList = await _apiClient.GetClientsAsync();
+            ViewData["ClientId"] = new SelectList(clientsList, "Id", "Name", contract.ClientId);
             return View(contract);
         }
 
@@ -136,11 +133,22 @@ public async Task<IActionResult> Index(string? status)
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null) return NotFound();
+            var dto = await _apiClient.GetContractAsync(id.Value);
+            if (dto == null) return NotFound();
 
-            var contract = await _context.Contracts.FindAsync(id);
-            if (contract == null) return NotFound();
-            
-            ViewData["ClientId"] = new SelectList(_context.Clients, "Id", "Name", contract.ClientId);
+            var contract = new Contract
+            {
+                Id = dto.Id,
+                ClientId = dto.ClientId,
+                StartDate = dto.StartDate,
+                EndDate = dto.EndDate,
+                Status = dto.Status,
+                ServiceLevel = dto.ServiceLevel,
+                ContractNumber = dto.ContractNumber,
+                ContractValueUSD = dto.ContractValueUSD
+            };
+            var clients = await _apiClient.GetClientsAsync();
+            ViewData["ClientId"] = new SelectList(clients, "Id", "Name", contract.ClientId);
             return View(contract);
         }
 
@@ -148,7 +156,7 @@ public async Task<IActionResult> Index(string? status)
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,ClientId,StartDate,EndDate,Status,ServiceLevel,ContractNumber,ContractValueUSD,SignedAgreementPath,SignedAgreementFileName")] Contract contract)
+        public async Task<IActionResult> Edit(int id, Contract contract)
         {
             if (id != contract.Id) return NotFound();
 
@@ -156,66 +164,84 @@ public async Task<IActionResult> Index(string? status)
             {
                 try
                 {
-                    var rate = await _currencyService.GetUSDToZARRateAsync();
-                    contract.ContractValueZAR = contract.ContractValueUSD * rate;
-                    contract.LastModifiedDate = DateTime.UtcNow;
-                    
-                    _context.Update(contract);
-                    await _context.SaveChangesAsync();
-                    TempData["SuccessMessage"] = "Contract updated successfully!";
+                    // Note: API doesn't have PUT /contracts/{id} yet, but we have PATCH for status.
+                    // For full update, either implement PUT endpoint or combine create+delete.
+                    // For simplicity, we'll only allow status update via separate action.
+                    TempData["WarningMessage"] = "Full contract edit not supported via API. Use Status update instead.";
+                    return RedirectToAction(nameof(Index));
                 }
-                catch (DbUpdateConcurrencyException)
+                catch (Exception ex)
                 {
-                    if (!ContractExists(contract.Id)) return NotFound();
-                    throw;
+                    _logger.LogError(ex, "Error updating contract");
+                    ModelState.AddModelError("", "Failed to update contract.");
                 }
-                return RedirectToAction(nameof(Index));
             }
-            ViewData["ClientId"] = new SelectList(_context.Clients, "Id", "Name", contract.ClientId);
+
+            var clients = await _apiClient.GetClientsAsync();
+            ViewData["ClientId"] = new SelectList(clients, "Id", "Name", contract.ClientId);
             return View(contract);
+        }
+
+        // POST: Contracts/UpdateStatus (convenience action)
+        [HttpPost]
+        [Authorize(Roles = "Admin,LogisticsManager")]
+        public async Task<IActionResult> UpdateStatus(int id, string status)
+        {
+            var success = await _apiClient.UpdateContractStatusAsync(id, status);
+            if (success)
+                TempData["SuccessMessage"] = $"Contract status updated to {status}";
+            else
+                TempData["ErrorMessage"] = "Failed to update status";
+            return RedirectToAction(nameof(Details), new { id });
         }
 
         // GET: Contracts/Search
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Search(DateTime? startDate, DateTime? endDate, string status)
         {
-            await _contractStatusService.SyncAllAsync(DateTime.UtcNow.Date);
-
-            var query = _context.Contracts.Include(c => c.Client).AsQueryable();
+            // Since API supports filtering only by status, we'll get all and filter in memory for date range.
+            var allContracts = await _apiClient.GetContractsAsync(status);
+            var filtered = allContracts.AsEnumerable();
 
             if (startDate.HasValue)
-            {
-                query = query.Where(c => c.StartDate >= startDate.Value);
-            }
-
+                filtered = filtered.Where(c => c.StartDate >= startDate.Value);
             if (endDate.HasValue)
-            {
-                query = query.Where(c => c.EndDate <= endDate.Value);
-            }
+                filtered = filtered.Where(c => c.EndDate <= endDate.Value);
 
-            if (!string.IsNullOrEmpty(status) && status != "All")
+            var contracts = filtered.Select(dto => new Contract
             {
-                query = query.Where(c => c.Status == status);
-            }
+                Id = dto.Id,
+                ClientId = dto.ClientId,
+                Client = new Client { Name = dto.ClientName },
+                StartDate = dto.StartDate,
+                EndDate = dto.EndDate,
+                Status = dto.Status,
+                ServiceLevel = dto.ServiceLevel,
+                ContractNumber = dto.ContractNumber,
+                ContractValueUSD = dto.ContractValueUSD,
+                ContractValueZAR = dto.ContractValueZAR,
+                CreatedDate = dto.CreatedDate,
+                LastModifiedDate = dto.LastModifiedDate
+            }).ToList();
 
-            var contracts = await query.ToListAsync();
             ViewData["StatusFilter"] = new SelectList(new[] { "All", "Draft", "Active", "Expired", "On Hold" }, status ?? "All");
             ViewData["StartDate"] = startDate?.ToString("yyyy-MM-dd");
             ViewData["EndDate"] = endDate?.ToString("yyyy-MM-dd");
-            
             return View("Index", contracts);
         }
 
         // GET: Contracts/DownloadAgreement/5
+        // Note: PDF files are stored on server; if you moved file storage to API, you'd need to stream from API.
+        // For now, this action still expects files in local wwwroot. To fully decouple, create API endpoint /api/contracts/{id}/download.
         public async Task<IActionResult> DownloadAgreement(int id)
         {
-            var contract = await _context.Contracts.FindAsync(id);
+            var contract = await _apiClient.GetContractAsync(id);
             if (contract == null || string.IsNullOrEmpty(contract.SignedAgreementPath))
                 return NotFound();
 
+            // Assuming files are still stored in the MVC's wwwroot. If files are on API server, you'd proxy.
             var webRootPath = _environment.WebRootPath ?? _environment.ContentRootPath;
             var filePath = Path.Combine(webRootPath, contract.SignedAgreementPath.TrimStart('/'));
-            
             if (!System.IO.File.Exists(filePath))
                 return NotFound();
 
@@ -230,19 +256,12 @@ public async Task<IActionResult> Index(string? status)
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var contract = await _context.Contracts.FindAsync(id);
-            if (contract != null)
-            {
-                _context.Contracts.Remove(contract);
-                await _context.SaveChangesAsync();
+            var success = await _apiClient.DeleteContractAsync(id);
+            if (success)
                 TempData["SuccessMessage"] = "Contract deleted successfully!";
-            }
+            else
+                TempData["ErrorMessage"] = "Failed to delete contract.";
             return RedirectToAction(nameof(Index));
-        }
-
-        private bool ContractExists(int id)
-        {
-            return _context.Contracts.Any(e => e.Id == id);
         }
     }
 }
