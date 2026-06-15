@@ -1,12 +1,10 @@
-version: '3.8'
-
 services:
   sql-server-db:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: sql-server-db
     environment:
       ACCEPT_EULA: "Y"
-      SA_PASSWORD: "YourStrong!Password123"
+      SA_PASSWORD: "Nokubonga@01"                # <-- your password
       MSSQL_PID: "Express"
     ports:
       - "1433:1433"
@@ -15,7 +13,7 @@ services:
     networks:
       - techmove_network
     healthcheck:
-      test: ["CMD-SHELL", "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P YourStrong!Password123 -Q 'SELECT 1' || exit 1"]
+      test: ["CMD-SHELL", "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P Nokubonga@01 -Q 'SELECT 1' || exit 1"]
       interval: 10s
       retries: 10
       start_period: 10s
@@ -27,7 +25,7 @@ services:
       dockerfile: TechMove.API/Dockerfile
     container_name: glms-backend-api
     environment:
-      - ConnectionStrings__DefaultConnection=Server=sql-server-db;Database=TechMoveDB;User=sa;Password=YourStrong!Password123;TrustServerCertificate=true;
+      - ConnectionStrings__DefaultConnection=Server=sql-server-db;Database=TechMoveDB;User=sa;Password=Nokubonga@01;TrustServerCertificate=true;
       - Jwt__Key=YourSuperSecretKeyThatIsAtLeast32CharsLong123!
       - Jwt__Issuer=TechMoveAPI
       - Jwt__Audience=TechMoveClient
@@ -42,11 +40,11 @@ services:
   glms-frontend-web:
     build:
       context: .
-      dockerfile: TechMove/Dockerfile
+      dockerfile: Dockerfile                     # MVC Dockerfile is at the root
     container_name: glms-frontend-web
     environment:
       - ApiBaseUrl=http://glms-backend-api
-      - ConnectionStrings__DefaultConnection=Server=sql-server-db;Database=TechMoveDB;User=sa;Password=YourStrong!Password123;TrustServerCertificate=true;
+      - ConnectionStrings__DefaultConnection=Server=sql-server-db;Database=TechMoveDB;User=sa;Password=Nokubonga@01;TrustServerCertificate=true;
     ports:
       - "8080:80"
     depends_on:
