@@ -9,7 +9,6 @@ namespace TechMove.Controllers
 {
     public class AccountController : Controller
     {
-
         private readonly UserManager<IdentityUser> _userManager;
         private readonly SignInManager<IdentityUser> _signInManager;
         private readonly RoleManager<IdentityRole> _roleManager;
@@ -30,17 +29,6 @@ namespace TechMove.Controllers
             _logger = logger;
         }
 
-        private static readonly ConcurrentDictionary<string, (string Password, string Role)> Users = new(
-            new Dictionary<string, (string Password, string Role)>(StringComparer.OrdinalIgnoreCase)
-            {
-                ["admin"] = ("Admin@123", "Admin"),
-                ["manager"] = ("Manager@123", "LogisticsManager"),
-                ["user"] = ("User@123", "GeneralUser")
-            },
-            StringComparer.OrdinalIgnoreCase);
-
-       private static readonly ConcurrentDictionary<string, TechMove.Models.RegisteredUserProfile> RegisteredProfiles = new(StringComparer.OrdinalIgnoreCase); main
-
         // GET: Login
         [HttpGet]
         public IActionResult Login(string? returnUrl = null)
@@ -49,7 +37,7 @@ namespace TechMove.Controllers
             {
                 return RedirectToAction("Index", "Dashboard");
             }
-            
+
             ViewData["ReturnUrl"] = returnUrl;
             return View(new LoginViewModel());
         }
@@ -98,12 +86,12 @@ namespace TechMove.Controllers
             {
                 ModelState.AddModelError("AgreeTerms", "You must agree to the Terms & Conditions");
             }
-            
+
             if (!model.AgreePrivacy)
             {
                 ModelState.AddModelError("AgreePrivacy", "You must agree to the Privacy Policy");
             }
-            
+
             if (!ModelState.IsValid)
             {
                 return View(model);
@@ -115,10 +103,8 @@ namespace TechMove.Controllers
                 ModelState.AddModelError("Email", "An account with this email already exists.");
                 return View(model);
             }
-            
-            var user = new IdentityUser
 
-            RegisteredProfiles[key] = new TechMove.Models.RegisteredUserProfilemain
+            var user = new IdentityUser
             {
                 UserName = model.Email,
                 Email = model.Email,
@@ -132,7 +118,7 @@ namespace TechMove.Controllers
             {
                 // Determine role based on email domain
                 string role = DetermineUserRole(model.Email, model.AccountType);
-                
+
                 _logger.LogInformation("User {Email} assigned role: {Role}", model.Email, role);
 
                 if (!await _roleManager.RoleExistsAsync(role))
@@ -166,7 +152,7 @@ namespace TechMove.Controllers
                 {
                     return RedirectToAction("ClientDashboard", "Dashboard");
                 }
-                
+
                 return RedirectToAction("Index", "Dashboard");
             }
 
@@ -182,7 +168,7 @@ namespace TechMove.Controllers
         private string DetermineUserRole(string email, string selectedAccountType)
         {
             string domain = email.Split('@').Last().ToLower();
-            
+
             if (domain == "techmove.com")
             {
                 if (!string.IsNullOrEmpty(selectedAccountType))
@@ -191,7 +177,7 @@ namespace TechMove.Controllers
                 }
                 return "LogisticsManager";
             }
-            
+
             return "Client";
         }
 
