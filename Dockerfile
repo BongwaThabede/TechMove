@@ -1,7 +1,7 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 COPY ["TechMove.API/TechMove.API.csproj", "TechMove.API/"]
-COPY ["TechMove/TechMove.csproj", "TechMove/"]
+COPY ["TechMove.csproj", "."]        # because the main project is at root
 RUN dotnet restore "TechMove.API/TechMove.API.csproj"
 COPY . .
 WORKDIR "/src/TechMove.API"
