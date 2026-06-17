@@ -15,4 +15,10 @@ public class ContractResponse
     public DateTime CreatedDate { get; set; }
     public DateTime? LastModifiedDate { get; set; }
     public int DaysUntilExpiry { get; set; }
+
+    // Path (relative or absolute) to stored signed agreement PDF
+    public string? SignedAgreementPath { get; set; }
+
+    // Original or stored file name for the signed agreement
+    public string? SignedAgreementFileName { get; set; }
 }

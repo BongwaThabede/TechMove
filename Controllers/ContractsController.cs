@@ -5,8 +5,6 @@ using TechMove.Dtos.Requests;
 using TechMove.Dtos.Responses;
 using TechMove.Models;
 using TechMove.Services;
-using TechMove.Dtos.Requests;   // Add this
-using TechMove.Dtos.Responses;
 
 namespace TechMove.Controllers
 {
@@ -96,7 +94,7 @@ namespace TechMove.Controllers
             {
                 try
                 {
-                    await _apiClient.CreateContractAsync(contract);
+                    object value = await _apiClient.CreateContractAsync(contract);
 
                     // If file uploaded, send to API (needs an endpoint like POST /api/v1/contracts/{id}/upload)
                     if (signedAgreement != null && signedAgreement.Length > 0)

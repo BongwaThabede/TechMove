@@ -26,7 +26,7 @@ public class ContractsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Dtos.Responses.ContractResponse>>> GetContracts([FromQuery] string? status)
+    public async Task<ActionResult<IEnumerable<ContractResponse>>> GetContracts([FromQuery] string? status)
     {
         await _statusService.SyncAllAsync(DateTime.UtcNow.Date);
 
@@ -36,7 +36,7 @@ public class ContractsController : ControllerBase
 
         var contracts = await query
             .OrderByDescending(c => c.CreatedDate)
-            .Select(c => new Dtos.Responses.ContractResponse
+            .Select(c => new ContractResponse
             {
                 Id = c.Id,
                 ClientId = c.ClientId,
@@ -58,7 +58,7 @@ public class ContractsController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<Dtos.Responses.ContractResponse>> GetContract(int id)
+    public async Task<ActionResult<ContractResponse>> GetContract(int id)
     {
         var contract = await _context.Contracts
             .Include(c => c.Client)
@@ -68,7 +68,7 @@ public class ContractsController : ControllerBase
         if (_statusService.SyncSingle(contract, DateTime.UtcNow.Date))
             await _context.SaveChangesAsync();
 
-        return Ok(new Dtos.Responses.ContractResponse
+        return Ok(new ContractResponse
         {
             Id = contract.Id,
             ClientId = contract.ClientId,
@@ -88,7 +88,7 @@ public class ContractsController : ControllerBase
 
     [HttpPost]
     [Authorize(Roles = "Admin,LogisticsManager")]
-    public async Task<ActionResult<Dtos.Responses.ContractResponse>> CreateContract(Dtos.Requests.CreateContractRequest request)
+    public async Task<ActionResult<ContractResponse>> CreateContract(CreateContractRequest request)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
 
@@ -112,7 +112,7 @@ public class ContractsController : ControllerBase
         _context.Contracts.Add(contract);
         await _context.SaveChangesAsync();
 
-        var response = new Dtos.Responses.ContractResponse
+        var response = new ContractResponse
         {
             Id = contract.Id,
             ClientId = contract.ClientId,
@@ -130,9 +130,10 @@ public class ContractsController : ControllerBase
         return CreatedAtAction(nameof(GetContract), new { id = contract.Id }, response);
     }
 
+    // ✅ FIX: Fully qualified type to avoid ambiguity
     [HttpPatch("{id}/status")]
     [Authorize(Roles = "Admin,LogisticsManager")]
-    public async Task<IActionResult> UpdateContractStatus(int id, [FromBody] UpdateContractStatusRequest request)
+    public async Task<IActionResult> UpdateContractStatus(int id, [FromBody] Dtos.Requests.UpdateContractStatusRequest request)
     {
         var contract = await _context.Contracts.FindAsync(id);
         if (contract == null) return NotFound();
@@ -145,7 +146,7 @@ public class ContractsController : ControllerBase
 
     [HttpPut("{id}")]
     [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> UpdateContract(int id, Dtos.Requests.CreateContractRequest request)
+    public async Task<IActionResult> UpdateContract(int id, CreateContractRequest request)
     {
         var contract = await _context.Contracts.FindAsync(id);
         if (contract == null) return NotFound();

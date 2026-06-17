@@ -11,5 +11,4 @@ public interface IApiClient
     Task<bool> UpdateContractStatusAsync(int id, string status);
     Task<bool> DeleteContractAsync(int id);
     Task<List<ClientResponse>> GetClientsAsync();
-    Task CreateContractAsync(Dtos.Requests.CreateContractRequest contract);
 }

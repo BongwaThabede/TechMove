@@ -75,9 +75,4 @@ public class ApiClient : IApiClient
         var pagedResponse = await response.Content.ReadFromJsonAsync<PagedResponse<ClientResponse>>();
         return pagedResponse?.Data?.ToList() ?? new();
     }
-
-    public Task CreateContractAsync(Dtos.Requests.CreateContractRequest contract)
-    {
-        throw new NotImplementedException();
-    }
 }
