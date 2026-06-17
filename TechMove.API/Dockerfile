@@ -10,5 +10,6 @@ RUN dotnet publish "TechMove.API.csproj" -c Release -o /app/publish -p:UseAppHos
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
 EXPOSE 80
+ENV ASPNETCORE_URLS=http://+:80
 COPY --from=build /app/publish .
 ENTRYPOINT ["dotnet", "TechMove.API.dll"]

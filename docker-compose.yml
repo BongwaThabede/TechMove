@@ -12,7 +12,6 @@ services:
       - sql_data:/var/opt/mssql
     networks:
       - techmove_network
-    # healthcheck removed – SQL will be ready anyway
 
   glms-backend-api:
     build:
@@ -37,6 +36,8 @@ services:
       dockerfile: Dockerfile
     container_name: glms-frontend-web
     environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://0.0.0.0:80          # ✅ forces IPv4 binding
       - ApiBaseUrl=http://glms-backend-api
       - ConnectionStrings__DefaultConnection=Server=sql-server-db;Database=TechMoveDB;User=sa;Password=Nokubonga@01;TrustServerCertificate=true;
     ports:
@@ -45,6 +46,8 @@ services:
       - glms-backend-api
     networks:
       - techmove_network
+    volumes:
+      - aspnet-keys:/root/.aspnet/DataProtection-Keys   # ✅ persist keys
 
 networks:
   techmove_network:
@@ -52,3 +55,4 @@ networks:
 
 volumes:
   sql_data:
+  aspnet-keys:

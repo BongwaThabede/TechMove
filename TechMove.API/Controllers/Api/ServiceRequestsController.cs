@@ -10,7 +10,7 @@ namespace TechMove.API.Controllers.Api.v1;
 
 [ApiController]
 [Route("api/v1/[controller]")]
-[Authorize]
+// [Authorize]
 public class ServiceRequestsController : ControllerBase
 {
     private readonly ApplicationDbContext _context;

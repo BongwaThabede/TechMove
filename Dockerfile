@@ -8,5 +8,6 @@ RUN dotnet publish "TechMove.csproj" -c Release -o /app/publish -p:UseAppHost=fa
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
 EXPOSE 80
+ENV ASPNETCORE_URLS=http://+:80
 COPY --from=build /app/publish .
 ENTRYPOINT ["dotnet", "TechMove.dll"]

@@ -11,6 +11,11 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
+        // Add services
+        builder.Services.AddControllers();
+        builder.Services.AddEndpointsApiExplorer();
+        builder.Services.AddSwaggerGen();
+
         builder.Services.AddDbContext<ApplicationDbContext>(options =>
             options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -23,16 +28,17 @@ public class Program
         builder.Services.AddScoped<IFileValidationService, FileValidationService>();
         builder.Services.AddHttpClient<ICurrencyService, CurrencyService>();
 
-        builder.Services.AddAuthentication();
-        builder.Services.AddAuthorization();
-        builder.Services.AddControllers();
-
         var app = builder.Build();
+
+        // Enable Swagger
+        app.UseSwagger();
+        app.UseSwaggerUI();
 
         app.UseHttpsRedirection();
         app.UseAuthentication();
         app.UseAuthorization();
         app.MapControllers();
+
         app.Run();
     }
 }
